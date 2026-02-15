@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Newcomer Dashboard - Digital Life Organizer</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body class="bg-light">
+  <!-- NAVBAR -->
+  <div id="navArea"></div>
+
+  <div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h3 class="mb-0">Newcomer Dashboard</h3>
+      <button class="btn btn-outline-dark btn-sm" onclick="loadTasks()">Refresh</button>
+    </div>
+
+    <div class="row g-3">
+      <!-- Add Task -->
+      <div class="col-lg-5">
+        <div class="card p-3 shadow-sm">
+          <h5 class="mb-3">Add Task</h5>
+
+          <label class="form-label">Title</label>
+          <input id="title" class="form-control mb-2" placeholder="Task title (required)">
+
+          <label class="form-label">Description</label>
+          <textarea id="description" class="form-control mb-2" rows="3" placeholder="Optional description"></textarea>
+
+          <label class="form-label">Due Date</label>
+          <input id="due_date" type="date" class="form-control mb-3">
+
+          <button class="btn btn-dark w-100" onclick="addTask()">Add Task</button>
+        </div>
+      </div>
+
+      <!-- Task List -->
+      <div class="col-lg-7">
+        <div class="card p-3 shadow-sm">
+          <h5 class="mb-2">My Tasks</h5>
+          <div id="taskList" class="text-muted">Loading...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/navbar.js"></script>
+
+  <script>
+    // Protect page
+    const token = localStorage.getItem("token");
+    const user = getUser();
+    if (!token || !user) window.location.href = "index.html";
+    if (user.role !== "newcomer") window.location.href = "admin.html";
+
+    renderNavbar();
+
+    async function loadTasks() {
+      const list = document.getElementById("taskList");
+      list.textContent = "Loading...";
+
+      try {
+        const data = await apiRequest("/tasks", "GET", null, true);
+
+        if (!data.tasks.length) {
+          list.innerHTML = "<p class='text-muted mb-0'>No tasks yet.</p>";
+          return;
+        }
+
+        list.innerHTML = data.tasks.map(t => `
+          <div class="border rounded p-2 mb-2 bg-white">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <b>${escapeHtml(t.title)}</b>
+                ${t.description ? `<div class="small text-muted">${escapeHtml(t.description)}</div>` : ""}
+                <div class="small mt-1"><b>Due:</b> ${t.due_date ? t.due_date : "Not set"}</div>
+              </div>
+              <span class="badge ${t.status === "completed" ? "text-bg-success" : "text-bg-secondary"}">${t.status}</span>
+            </div>
+
+            <div class="mt-2 d-flex gap-2">
+              <button class="btn btn-sm btn-outline-success" onclick="markDone(${t.id})">Mark Done</button>
+              <button class="btn btn-sm btn-outline-danger" onclick="deleteTask(${t.id})">Delete</button>
+            </div>
+          </div>
+        `).join("");
+
+      } catch (e) {
+        list.innerHTML = `<p class="text-danger mb-0">${e.message}</p>`;
+      }
+    }
+
+    async function addTask() {
+      const title = document.getElementById("title").value.trim();
+      const description = document.getElementById("description").value.trim();
+      const due_date = document.getElementById("due_date").value || null;
+
+      if (!title) return alert("Title is required!");
+
+      try {
+        await apiRequest("/tasks", "POST", { title, description, due_date }, true);
+
+        document.getElementById("title").value = "";
+        document.getElementById("description").value = "";
+        document.getElementById("due_date").value = "";
+
+        loadTasks();
+      } catch (e) {
+        alert(e.message);
+      }
+    }
+
+    async function markDone(id) {
+      await apiRequest(`/tasks/${id}`, "PUT", { status: "completed" }, true);
+      loadTasks();
+    }
+
+    async function deleteTask(id) {
+      if (!confirm("Delete this task?")) return;
+      await apiRequest(`/tasks/${id}`, "DELETE", null, true);
+      loadTasks();
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    loadTasks();
+  </script>
+</body>
+</html>

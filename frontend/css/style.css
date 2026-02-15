@@ -1,0 +1,14 @@
+body { background: #f6f7fb; }
+
+.card {
+  border-radius: 16px;
+  border: 1px solid #eee;
+}
+
+h3, h5 { font-weight: 700; }
+
+.btn, .form-control, .form-select {
+  border-radius: 10px;
+}
+
+.badge { border-radius: 999px; }
