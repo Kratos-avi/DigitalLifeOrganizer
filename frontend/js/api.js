@@ -1,20 +1,36 @@
-const API_BASE = "http://localhost:5000/api";
+// frontend/js/api.js
+// ✅ LOCAL ONLY
+const BASE_URL = "http://localhost:5000/api";
 
-async function apiRequest(path, method = "GET", body = null, auth = false) {
-  const headers = { "Content-Type": "application/json" };
+async function apiRequest(path, method = "GET", body = null, auth = true) {
+  const headers = {};
 
   if (auth) {
     const token = localStorage.getItem("token");
     if (token) headers["Authorization"] = "Bearer " + token;
   }
 
-  const res = await fetch(API_BASE + path, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : null
-  });
+  if (body !== null) headers["Content-Type"] = "application/json";
 
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.message || "Request failed");
-  return data;
+  try {
+    if (typeof showLoader === "function") showLoader(true);
+
+    const res = await fetch(BASE_URL + path, {
+      method,
+      headers,
+      body: body !== null ? JSON.stringify(body) : null
+    });
+
+    const isJson = res.headers.get("content-type")?.includes("application/json");
+    const data = isJson ? await res.json() : null;
+
+    if (!res.ok) {
+      const msg = data?.message || "Something went wrong.";
+      throw new Error(msg);
+    }
+
+    return data;
+  } finally {
+    if (typeof showLoader === "function") showLoader(false);
+  }
 }

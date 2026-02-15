@@ -84,21 +84,80 @@
       <!-- Task List -->
       <div class="col-lg-7">
         <div class="card p-3 shadow-soft">
-          <div class="d-flex justify-content-between align-items-center">
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
             <h5 class="mb-0 fw-bold">My Tasks</h5>
+
+            <div class="d-flex gap-2 flex-wrap">
+              <input id="taskSearch" class="form-control form-control-sm glass-input"
+                     placeholder="Search..." style="max-width: 180px;">
+              <select id="taskStatus" class="form-select form-select-sm glass-input" style="max-width: 140px;">
+                <option value="all" selected>All</option>
+                <option value="pending">Pending</option>
+                <option value="completed">Completed</option>
+              </select>
+            </div>
           </div>
+
           <hr class="my-3">
+
           <div id="taskList" class="text-muted">Loading...</div>
+
+          <div class="d-flex justify-content-between align-items-center mt-3">
+            <button id="btnPrev" class="btn btn-sm btn-outline-dark">Prev</button>
+            <div class="small-muted" id="pageInfo">Page 1 / 1</div>
+            <button id="btnNext" class="btn btn-sm btn-outline-dark">Next</button>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- Edit Modal -->
+  <div class="modal fade" id="editTaskModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content card shadow-soft p-2">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Task</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          <input type="hidden" id="edit_id">
+
+          <label class="form-label">Title</label>
+          <input id="edit_title" class="form-control mb-2">
+
+          <label class="form-label">Description</label>
+          <textarea id="edit_description" class="form-control mb-2" rows="3"></textarea>
+
+          <label class="form-label">Due Date</label>
+          <input id="edit_due_date" type="date" class="form-control mb-2">
+
+          <label class="form-label">Status</label>
+          <select id="edit_status" class="form-select">
+            <option value="pending">pending</option>
+            <option value="completed">completed</option>
+          </select>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-dark" onclick="saveEdit()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script src="js/ui.js"></script>
   <script src="js/api.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/navbar.js"></script>
 
   <script>
+    // ---------- Auth guard ----------
     const token = localStorage.getItem("token");
     const user = getUser();
     if (!token || !user) window.location.href = "index.html";
@@ -106,49 +165,145 @@
 
     renderNavbar();
 
+    // ---------- Helpers ----------
+    function notify(msg, type = "info") {
+      if (typeof toast === "function") return toast(msg, type);
+      alert(msg);
+    }
+
+    function escapeHtml(str) {
+      return String(str ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function formatDate(d) {
+      try { return new Date(d).toLocaleDateString(); }
+      catch { return d; }
+    }
+
+    // Safe base64 encode/decode for passing object in onclick
+    function toB64(obj) {
+      return btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
+    }
+    function fromB64(b64) {
+      return JSON.parse(decodeURIComponent(escape(atob(b64))));
+    }
+
+    // ---------- State ----------
+    let state = { q: "", status: "all", page: 1, limit: 6, totalPages: 1 };
+
+    // ---------- UI Events ----------
+    document.getElementById("taskSearch").addEventListener("input", (e) => {
+      state.q = e.target.value || "";
+      state.page = 1;
+      loadTasks();
+    });
+
+    document.getElementById("taskStatus").addEventListener("change", (e) => {
+      state.status = e.target.value || "all";
+      state.page = 1;
+      loadTasks();
+    });
+
+    document.getElementById("btnPrev").addEventListener("click", () => {
+      if (state.page > 1) {
+        state.page--;
+        loadTasks();
+      }
+    });
+
+    document.getElementById("btnNext").addEventListener("click", () => {
+      if (state.page < state.totalPages) {
+        state.page++;
+        loadTasks();
+      }
+    });
+
+    // ---------- API Calls ----------
+    async function loadSummary() {
+      const data = await apiRequest("/tasks/summary", "GET", null, true);
+      document.getElementById("pendingCount").textContent = data.pending ?? 0;
+      document.getElementById("doneCount").textContent = data.completed ?? 0;
+    }
+
     async function loadTasks() {
       const list = document.getElementById("taskList");
       list.textContent = "Loading...";
 
       try {
-        const data = await apiRequest("/tasks", "GET", null, true);
+        await loadSummary();
 
-        document.getElementById("pendingCount").textContent =
-          data.tasks.filter(t => t.status !== "completed").length;
+        const qs = new URLSearchParams({
+          q: state.q,
+          status: state.status,
+          page: String(state.page),
+          limit: String(state.limit),
+        });
 
-        document.getElementById("doneCount").textContent =
-          data.tasks.filter(t => t.status === "completed").length;
+        const data = await apiRequest("/tasks?" + qs.toString(), "GET", null, true);
 
-        if (!data.tasks.length) {
-          list.innerHTML = "<p class='text-muted mb-0'>No tasks yet.</p>";
+        // Backend returns: page, totalPages, tasks
+        state.totalPages = data.totalPages || 1;
+
+        document.getElementById("pageInfo").textContent = `Page ${data.page} / ${state.totalPages}`;
+        document.getElementById("btnPrev").disabled = (data.page <= 1);
+        document.getElementById("btnNext").disabled = (data.page >= state.totalPages);
+
+        if (!data.tasks || !data.tasks.length) {
+          list.innerHTML = "<p class='text-muted mb-0'>No tasks found.</p>";
           return;
         }
 
-        list.innerHTML = data.tasks.map(t => `
-          <div class="list-item">
-            <div class="d-flex justify-content-between align-items-start">
-              <div>
-                <div class="d-flex gap-2 align-items-center">
-                  <b>${escapeHtml(t.title)}</b>
-                  ${t.is_starter == 1 ? `<span class="badge text-bg-info">starter</span>` : ``}
-                </div>
-                ${t.description ? `<div class="small-muted">${escapeHtml(t.description)}</div>` : ""}
-                <div class="small mt-1"><b>Due:</b> ${t.due_date ? formatDate(t.due_date) : "Not set"}</div>
-              </div>
-              <span class="badge ${t.status === "completed" ? "text-bg-success" : "text-bg-secondary"}">
-                ${t.status}
-              </span>
-            </div>
+        list.innerHTML = data.tasks.map(t => {
+          const status = (t.status || "pending");
+          const isCompleted = status === "completed";
 
-            <div class="list-actions mt-2">
-              <button class="btn btn-sm btn-outline-success" onclick="markDone(${t.id})">Mark Done</button>
-              <button class="btn btn-sm btn-outline-danger" onclick="deleteTask(${t.id})">Delete</button>
+          return `
+            <div class="list-item">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <div class="d-flex gap-2 align-items-center">
+                    <b>${escapeHtml(t.title)}</b>
+                    ${t.is_starter == 1 ? `<span class="badge text-bg-info">starter</span>` : ``}
+                  </div>
+
+                  ${t.description ? `<div class="small-muted">${escapeHtml(t.description)}</div>` : ""}
+
+                  <div class="small mt-1">
+                    <b>Due:</b> ${t.due_date ? formatDate(t.due_date) : "Not set"}
+                  </div>
+                </div>
+
+                <span class="badge ${isCompleted ? "text-bg-success" : "text-bg-secondary"}">
+                  ${escapeHtml(status)}
+                </span>
+              </div>
+
+              <div class="list-actions mt-2 d-flex gap-2 flex-wrap">
+                <button class="btn btn-sm btn-outline-primary"
+                        onclick="openEditB64('${toB64(t)}')">Edit</button>
+
+                <button class="btn btn-sm btn-outline-success"
+                        ${isCompleted ? "disabled" : ""}
+                        onclick="markDone(${t.id})">
+                  Mark Done
+                </button>
+
+                <button class="btn btn-sm btn-outline-danger"
+                        onclick="deleteTask(${t.id})">
+                  Delete
+                </button>
+              </div>
             </div>
-          </div>
-        `).join("");
+          `;
+        }).join("");
 
       } catch (e) {
-        list.innerHTML = `<p class="text-danger mb-0">${e.message}</p>`;
+        list.innerHTML = `<p class="text-danger mb-0">${escapeHtml(e.message)}</p>`;
       }
     }
 
@@ -157,49 +312,81 @@
       const description = document.getElementById("description").value.trim();
       const due_date = document.getElementById("due_date").value || null;
 
-      if (!title) return alert("Title is required!");
+      if (!title) return notify("Title is required!", "error");
 
       try {
         await apiRequest("/tasks", "POST", { title, description, due_date }, true);
+
         document.getElementById("title").value = "";
         document.getElementById("description").value = "";
         document.getElementById("due_date").value = "";
+
+        notify("Task added ✅", "success");
         loadTasks();
       } catch (e) {
-        alert(e.message);
+        notify(e.message, "error");
       }
     }
 
     async function markDone(id) {
-      await apiRequest(`/tasks/${id}`, "PUT", { status: "completed" }, true);
-      loadTasks();
+      try {
+        await apiRequest(`/tasks/${id}`, "PUT", { status: "completed" }, true);
+        notify("Marked completed ✅", "success");
+        loadTasks();
+      } catch (e) {
+        notify(e.message, "error");
+      }
     }
 
     async function deleteTask(id) {
       if (!confirm("Delete this task?")) return;
-      await apiRequest(`/tasks/${id}`, "DELETE", null, true);
-      loadTasks();
+      try {
+        await apiRequest(`/tasks/${id}`, "DELETE", null, true);
+        notify("Task deleted 🗑️", "info");
+        loadTasks();
+      } catch (e) {
+        notify(e.message, "error");
+      }
     }
 
-    function escapeHtml(str) {
-      return String(str)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+    // ---------- Edit Modal ----------
+    function openEditB64(b64) {
+      const t = fromB64(b64);
+
+      document.getElementById("edit_id").value = t.id;
+      document.getElementById("edit_title").value = t.title || "";
+      document.getElementById("edit_description").value = t.description || "";
+      document.getElementById("edit_due_date").value = t.due_date ? String(t.due_date).slice(0, 10) : "";
+      document.getElementById("edit_status").value = (t.status || "pending");
+
+      const modal = new bootstrap.Modal(document.getElementById("editTaskModal"));
+      modal.show();
     }
 
+    async function saveEdit() {
+      const id = document.getElementById("edit_id").value;
+      const title = document.getElementById("edit_title").value.trim();
+      const description = document.getElementById("edit_description").value.trim();
+      const due_date = document.getElementById("edit_due_date").value || null;
+      const status = document.getElementById("edit_status").value;
+
+      if (!title) return notify("Title is required!", "error");
+
+      try {
+        await apiRequest(`/tasks/${id}`, "PUT", { title, description, due_date, status }, true);
+        notify("Task updated ✅", "success");
+
+        const inst = bootstrap.Modal.getInstance(document.getElementById("editTaskModal"));
+        if (inst) inst.hide();
+
+        loadTasks();
+      } catch (e) {
+        notify(e.message, "error");
+      }
+    }
+
+    // ---------- Init ----------
     loadTasks();
-
-    function formatDate(d) {
-  try {
-    return new Date(d).toLocaleDateString();
-  } catch {
-    return d;
-  }
-}
-
   </script>
 </body>
 </html>

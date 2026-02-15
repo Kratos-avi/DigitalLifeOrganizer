@@ -1,11 +1,46 @@
+// backend/src/routes/admin.routes.js
+
 const express = require("express");
 const pool = require("../config/db");
 const { protect, authorize } = require("../middleware/auth");
 const starterTasks = require("../data/starterTasks");
+const bcrypt = require("bcryptjs");
+
 
 const router = express.Router();
 
-// ✅ Get all users (admin only)
+/* =========================================
+   ✅ ADMIN STATS (Analytics) - admin onlynpm run dev
+
+   GET /admin/stats
+========================================= */
+router.get("/stats", protect, authorize("admin"), async (req, res) => {
+  try {
+    const [[usersRow]] = await pool.query("SELECT COUNT(*) AS totalUsers FROM users");
+    const [[tasksRow]] = await pool.query("SELECT COUNT(*) AS totalTasks FROM tasks");
+    const [[completedTasksRow]] = await pool.query(
+      "SELECT COUNT(*) AS completedTasks FROM tasks WHERE status = 'completed'"
+    );
+    const [[annRow]] = await pool.query("SELECT COUNT(*) AS totalAnnouncements FROM announcements");
+    const [[deadRow]] = await pool.query("SELECT COUNT(*) AS totalDeadlines FROM deadlines");
+
+    res.json({
+      totalUsers: usersRow.totalUsers || 0,
+      totalTasks: tasksRow.totalTasks || 0,
+      completedTasks: completedTasksRow.completedTasks || 0,
+      totalAnnouncements: annRow.totalAnnouncements || 0,
+      totalDeadlines: deadRow.totalDeadlines || 0,
+    });
+  } catch (err) {
+    console.error("admin stats error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+/* =========================================
+   ✅ Get all users - admin only
+   GET /admin/users
+========================================= */
 router.get("/users", protect, authorize("admin"), async (req, res) => {
   try {
     const [rows] = await pool.query(
@@ -18,12 +53,68 @@ router.get("/users", protect, authorize("admin"), async (req, res) => {
   }
 });
 
-// ✅ Add starter tasks to any user (admin only)
+/* =========================================
+   ✅ Change user role - admin only
+   PUT /admin/users/:id/role
+   Body: { role: "admin" | "newcomer" }
+========================================= */
+router.put("/users/:id/role", protect, authorize("admin"), async (req, res) => {
+  try {
+    const userId = Number(req.params.id);
+    const { role } = req.body;
+
+    if (!["admin", "newcomer"].includes(role)) {
+      return res.status(400).json({ message: "Invalid role" });
+    }
+
+    const [u] = await pool.query("SELECT id FROM users WHERE id = ?", [userId]);
+    if (!u.length) return res.status(404).json({ message: "User not found" });
+
+    await pool.query("UPDATE users SET role = ? WHERE id = ?", [role, userId]);
+
+    res.json({ message: "Role updated successfully" });
+  } catch (err) {
+    console.error("role update error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+/* =========================================
+   ✅ Reset user password - admin only
+   PUT /admin/users/:id/reset-password
+   Body: { newPassword: "something" }
+========================================= */
+router.put("/users/:id/reset-password", protect, authorize("admin"), async (req, res) => {
+  try {
+    const userId = Number(req.params.id);
+    const { newPassword } = req.body;
+
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters" });
+    }
+
+    const [u] = await pool.query("SELECT id FROM users WHERE id = ?", [userId]);
+    if (!u.length) return res.status(404).json({ message: "User not found" });
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await pool.query("UPDATE users SET password_hash = ? WHERE id = ?", [hashed, userId]);
+
+
+    res.json({ message: "Password reset successfully" });
+  } catch (err) {
+    console.error("reset password error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+/* =========================================
+   ✅ Add starter tasks to any user - admin only
+   POST /admin/users/:id/add-starter-tasks
+========================================= */
 router.post("/users/:id/add-starter-tasks", protect, authorize("admin"), async (req, res) => {
   try {
     const userId = Number(req.params.id);
 
-    // Check user exists
     const [u] = await pool.query("SELECT id FROM users WHERE id = ?", [userId]);
     if (!u.length) return res.status(404).json({ message: "User not found" });
 
@@ -49,7 +140,10 @@ router.post("/users/:id/add-starter-tasks", protect, authorize("admin"), async (
   }
 });
 
-// ✅ Remove starter tasks from any user (admin only)
+/* =========================================
+   ✅ Remove starter tasks from any user - admin only
+   DELETE /admin/users/:id/remove-starter-tasks
+========================================= */
 router.delete("/users/:id/remove-starter-tasks", protect, authorize("admin"), async (req, res) => {
   try {
     const userId = Number(req.params.id);

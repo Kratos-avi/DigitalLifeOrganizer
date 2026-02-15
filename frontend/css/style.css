@@ -166,7 +166,16 @@ body::before{
   border: 1px solid rgba(255,255,255,.16);
   color: rgba(243,246,255,.95);
 }
+
+/* Make select arrow visible in dark theme (Bootstrap uses SVG arrow) */
+.form-select{
+  color: rgba(243,246,255,.95) !important;
+  background-color: rgba(255,255,255,.07) !important;
+  border-color: rgba(255,255,255,.16) !important;
+}
+
 .form-control::placeholder{ color: rgba(243,246,255,.70); }
+
 .form-control:focus, .form-select:focus{
   border-color: rgba(6,182,212,.60);
   box-shadow: 0 0 0 .25rem var(--ring);
@@ -303,4 +312,53 @@ a:hover {
 /* Fix: placeholder still clear */
 .form-control::placeholder{
   color: rgba(243,246,255,.70) !important;
+}
+
+/* ===== Loader Overlay ===== */
+.loader-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9998;
+}
+
+/* Optional: glass input look */
+.glass-input {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  color: #fff !important;
+}
+
+.glass-input::placeholder {
+  color: rgba(255,255,255,0.55) !important;
+}
+
+/* =========================================================
+   FINAL FIX: Select dropdown text visibility (IMPORTANT)
+   - Makes selected value readable
+   - Makes opened options readable
+========================================================= */
+select.glass-input,
+select.form-select.glass-input{
+  color: #ffffff !important;
+  background-color: rgba(255,255,255,0.08) !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+}
+
+/* When dropdown opens: options should be white on dark */
+select.glass-input option,
+select.form-select.glass-input option{
+  background: #0b0f18 !important;
+  color: #ffffff !important;
+}
+
+/* Extra: focus ring stays clean */
+select.glass-input:focus,
+select.form-select.glass-input:focus{
+  outline: none !important;
+  box-shadow: 0 0 0 .25rem rgba(6,182,212,.18) !important;
 }

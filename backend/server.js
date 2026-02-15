@@ -10,12 +10,25 @@ const taskRoutes = require("./src/routes/tasks.routes");
 const deadlineRoutes = require("./src/routes/deadlines.routes");
 const announcementRoutes = require("./src/routes/announcements.routes");
 const adminRoutes = require("./src/routes/admin.routes");
-
+const profileRoutes = require("./src/routes/profile.routes");
 
 const app = express();
 
-// Middlewares
-app.use(cors());
+// ✅ LOCAL CORS (Live Server / local dev)
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5500",
+      "http://127.0.0.1:5500",
+      "http://localhost:5173",
+      "http://127.0.0.1:5173",
+      "http://localhost:3000",
+      "http://127.0.0.1:3000",
+    ],
+    credentials: false,
+  })
+);
+
 app.use(express.json());
 
 // Base route
@@ -31,7 +44,7 @@ app.get("/db-test", async (req, res) => {
   } catch (err) {
     res.status(500).json({
       message: "DB connection failed",
-      error: err.message
+      error: err.message,
     });
   }
 });
@@ -43,9 +56,9 @@ app.use("/api/tasks", taskRoutes);
 app.use("/api/deadlines", deadlineRoutes);
 app.use("/api/announcements", announcementRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/profile", profileRoutes);
 
-
-// 404 handler for unknown routes (optional but nice)
+// 404 handler
 app.use((req, res) => {
   res.status(404).json({ message: "Route not found" });
 });
