@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Announcements - Digital Life Organizer</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <div id="navArea"></div>
+
+  <div class="container page-wrap fade-in">
+    <div class="section-title">
+      <div>
+        <h3>Announcements</h3>
+        <div class="small-muted">Admin updates and important information.</div>
+      </div>
+      <button class="btn btn-outline-dark btn-sm" onclick="loadAnnouncements()">Refresh</button>
+    </div>
+
+    <!-- Admin Box -->
+    <div id="adminBox" class="card p-3 shadow-soft mb-3 d-none">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 class="mb-0 fw-bold" id="formTitle">Create Announcement</h5>
+        <span class="kpi-pill">Admin Only</span>
+      </div>
+
+      <input id="a_id" type="hidden" />
+
+      <label class="form-label">Title</label>
+      <input id="a_title" class="form-control mb-2" placeholder="Title">
+
+      <label class="form-label">Category</label>
+      <select id="a_category" class="form-select mb-2">
+        <option value="general" selected>General</option>
+        <option value="immigration">Immigration</option>
+        <option value="housing">Housing</option>
+        <option value="employment">Employment</option>
+        <option value="health">Health</option>
+        <option value="finance">Finance</option>
+        <option value="education">Education</option>
+      </select>
+
+      <label class="form-label">Message</label>
+      <textarea id="a_message" class="form-control mb-3" rows="4" placeholder="Write announcement..."></textarea>
+
+      <div class="d-flex gap-2">
+        <button class="btn btn-dark" onclick="submitAnnouncement()">Save</button>
+        <button class="btn btn-outline-secondary" onclick="resetForm()">Clear</button>
+      </div>
+    </div>
+
+    <!-- List -->
+    <div class="card p-3 shadow-soft">
+      <h5 class="fw-bold mb-2">Latest</h5>
+      <div id="list" class="text-muted">Loading...</div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/navbar.js"></script>
+  <script>
+    const token = localStorage.getItem("token");
+    const user = getUser();
+    if (!token || !user) window.location.href = "index.html";
+
+    renderNavbar();
+
+    if (user.role === "admin") {
+      document.getElementById("adminBox").classList.remove("d-none");
+    }
+
+    async function loadAnnouncements() {
+      const list = document.getElementById("list");
+      list.textContent = "Loading...";
+
+      try {
+        const data = await apiRequest("/announcements", "GET", null, true);
+
+        if (!data.announcements.length) {
+          list.innerHTML = "<p class='text-muted mb-0'>No announcements yet.</p>";
+          return;
+        }
+
+        list.innerHTML = data.announcements.map(a => `
+          <div class="list-item">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <b>${escapeHtml(a.title)}</b>
+                <div class="small-muted">
+                  ${a.category} • Posted by ${escapeHtml(a.created_by_name)} • ${formatDate(a.created_at)}
+                  ${a.updated_at ? ` • Updated ${formatDate(a.updated_at)}` : ""}
+                </div>
+              </div>
+              <span class="badge text-bg-dark">${a.category}</span>
+            </div>
+
+            <div class="mt-2">${escapeHtml(a.message).replaceAll("\\n","<br>")}</div>
+
+            ${
+              user.role === "admin"
+                ? `
+                  <div class="list-actions mt-2">
+                    <button class="btn btn-sm btn-outline-primary"
+                      onclick='editAnnouncement(${JSON.stringify(a).replaceAll("'","&#39;")})'>
+                      Edit
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteAnnouncement(${a.id})">
+                      Delete
+                    </button>
+                  </div>
+                `
+                : ``
+            }
+          </div>
+        `).join("");
+
+      } catch (e) {
+        list.innerHTML = `<p class="text-danger mb-0">${e.message}</p>`;
+      }
+    }
+
+    async function submitAnnouncement() {
+      if (user.role !== "admin") return;
+
+      const id = document.getElementById("a_id").value;
+      const title = document.getElementById("a_title").value.trim();
+      const category = document.getElementById("a_category").value;
+      const message = document.getElementById("a_message").value.trim();
+
+      if (!title || !message) return alert("Title and message are required.");
+
+      if (!id) {
+        await apiRequest("/announcements", "POST", { title, category, message }, true);
+      } else {
+        await apiRequest(`/announcements/${id}`, "PUT", { title, category, message }, true);
+      }
+
+      resetForm();
+      loadAnnouncements();
+    }
+
+    function editAnnouncement(a) {
+      document.getElementById("formTitle").textContent = "Edit Announcement";
+      document.getElementById("a_id").value = a.id;
+      document.getElementById("a_title").value = a.title || "";
+      document.getElementById("a_category").value = a.category || "general";
+      document.getElementById("a_message").value = a.message || "";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    async function deleteAnnouncement(id) {
+      if (user.role !== "admin") return;
+      if (!confirm("Delete this announcement?")) return;
+
+      await apiRequest(`/announcements/${id}`, "DELETE", null, true);
+      loadAnnouncements();
+    }
+
+    function resetForm() {
+      document.getElementById("formTitle").textContent = "Create Announcement";
+      document.getElementById("a_id").value = "";
+      document.getElementById("a_title").value = "";
+      document.getElementById("a_category").value = "general";
+      document.getElementById("a_message").value = "";
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function formatDate(s) {
+      try { return new Date(s).toLocaleString(); }
+      catch { return s; }
+    }
+
+    loadAnnouncements();
+  </script>
+</body>
+</html>

@@ -2,9 +2,13 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const pool = require("../config/db");
+const starterTasks = require("../data/starterTasks");
 
 const router = express.Router();
 
+/* ===============================
+   CREATE JWT TOKEN
+================================= */
 function makeToken(user) {
   return jwt.sign(
     { id: user.id, email: user.email, role: user.role },
@@ -13,44 +17,91 @@ function makeToken(user) {
   );
 }
 
-// POST /api/auth/register
+/* ===============================
+   REGISTER
+================================= */
 router.post("/register", async (req, res) => {
   try {
     const { full_name, email, password, role } = req.body;
 
+    // Basic validation
     if (!full_name || !email || !password) {
-      return res.status(400).json({ message: "full_name, email, password required" });
+      return res.status(400).json({
+        message: "full_name, email and password are required"
+      });
     }
 
     const safeRole = role === "admin" ? "admin" : "newcomer";
 
-    const [exists] = await pool.query("SELECT id FROM users WHERE email = ?", [email]);
-    if (exists.length) return res.status(409).json({ message: "Email already exists" });
+    // Check if email already exists
+    const [exists] = await pool.query(
+      "SELECT id FROM users WHERE email = ?",
+      [email]
+    );
 
+    if (exists.length) {
+      return res.status(409).json({ message: "Email already exists" });
+    }
+
+    // Hash password
     const password_hash = await bcrypt.hash(password, 10);
 
+    // Insert user
     const [result] = await pool.query(
       "INSERT INTO users (full_name, email, password_hash, role) VALUES (?,?,?,?)",
       [full_name, email, password_hash, safeRole]
     );
 
-    const user = { id: result.insertId, email, role: safeRole };
+    const user = {
+      id: result.insertId,
+      email,
+      role: safeRole
+    };
+
+    /* ===============================
+       AUTO-ADD STARTER TASKS
+       (ONLY FOR NEWCOMER USERS)
+    ================================= */
+    if (safeRole === "newcomer") {
+      const today = new Date();
+
+      for (const t of starterTasks) {
+        const due = new Date(today);
+        due.setDate(due.getDate() + (t.due_days || 7));
+        const dueDate = due.toISOString().slice(0, 10);
+
+      await pool.query(
+      "INSERT INTO tasks (user_id, title, description, due_date, is_starter) VALUES (?,?,?,?,1)",
+      [user.id, t.title, t.description || null, dueDate]
+);
+      }
+    }
+
     const token = makeToken(user);
 
-    res.status(201).json({ message: "Registered", token, user });
+    return res.status(201).json({
+      message: "Registered",
+      token,
+      user
+    });
+
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error" });
   }
 });
 
-// POST /api/auth/login
+/* ===============================
+   LOGIN
+================================= */
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ message: "email and password required" });
+      return res.status(400).json({
+        message: "email and password are required"
+      });
     }
 
     const [rows] = await pool.query(
@@ -58,19 +109,35 @@ router.post("/login", async (req, res) => {
       [email]
     );
 
-    if (!rows.length) return res.status(401).json({ message: "Invalid credentials" });
+    if (!rows.length) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
 
     const u = rows[0];
-    const ok = await bcrypt.compare(password, u.password_hash);
-    if (!ok) return res.status(401).json({ message: "Invalid credentials" });
 
-    const user = { id: u.id, email: u.email, role: u.role };
+    const passwordMatch = await bcrypt.compare(password, u.password_hash);
+
+    if (!passwordMatch) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    const user = {
+      id: u.id,
+      email: u.email,
+      role: u.role
+    };
+
     const token = makeToken(user);
 
-    res.json({ message: "Logged in", token, user });
+    return res.json({
+      message: "Logged in",
+      token,
+      user
+    });
+
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error" });
   }
 });
 

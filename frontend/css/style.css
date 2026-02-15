@@ -1,14 +1,306 @@
-body { background: #f6f7fb; }
+:root{
+  --bgA:#070A12;        /* deep navy */
+  --bgB:#0B1220;        /* darker blue */
+  --neon1:#7C3AED;      /* violet */
+  --neon2:#06B6D4;      /* cyan */
+  --neon3:#22C55E;      /* green */
 
-.card {
+  --text:#F3F6FF;       /* brighter main text */
+  --muted: rgba(243,246,255,.86); /* brighter muted */
+
+  --glass: rgba(255,255,255,.06);
+  --glass2: rgba(255,255,255,.10);
+  --border: rgba(255,255,255,.14);
+  --shadow: rgba(0,0,0,.45);
+
+  --radius: 18px;
+  --ring: rgba(6,182,212,.22);
+}
+
+/* ====== Background (digital metallic) ====== */
+*{ box-sizing:border-box; }
+html, body{ height:100%; }
+body{
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(900px 500px at 12% 8%, rgba(124,58,237,.25), transparent 60%),
+    radial-gradient(900px 520px at 88% 10%, rgba(6,182,212,.22), transparent 60%),
+    radial-gradient(900px 520px at 50% 110%, rgba(34,197,94,.12), transparent 55%),
+    linear-gradient(180deg, var(--bgA), var(--bgB));
+  overflow-x:hidden;
+}
+
+/* Subtle animated grid */
+body::before{
+  content:"";
+  position:fixed;
+  inset:-2px;
+  pointer-events:none;
+  opacity:.25;
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,.06) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(closest-side at 50% 30%, rgba(0,0,0,.9), transparent 72%);
+  animation: gridFloat 10s ease-in-out infinite;
+}
+@keyframes gridFloat{
+  0%,100%{ transform: translateY(0); }
+  50%{ transform: translateY(-14px); }
+}
+
+/* ====== Navbar (glass + glow) ====== */
+.navbar{
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  background: rgba(12,18,32,.62) !important;
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255,255,255,.10);
+}
+
+.navbar .navbar-brand{
+  color: var(--text) !important;
+  letter-spacing:.2px;
+}
+
+/* Make navbar text readable */
+.navbar a, .navbar span{
+  color: rgba(243,246,255,.90) !important;
+}
+
+.brand-dot{
+  width:12px;
+  height:12px;
+  border-radius:999px;
+  background: linear-gradient(135deg, var(--neon1), var(--neon2));
+  box-shadow: 0 0 18px rgba(6,182,212,.35), 0 0 28px rgba(124,58,237,.25);
+}
+
+/* ====== Containers ====== */
+.page-wrap{ padding: 26px 0 36px; }
+
+/* ====== Metallic Glass Cards ====== */
+.card{
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.04));
+  border: 1px solid rgba(255,255,255,.14);
+  color: rgba(243,246,255,.94);
+  backdrop-filter: blur(12px);
+}
+
+.shadow-soft{
+  box-shadow: 0 18px 45px rgba(0,0,0,.35);
+}
+
+/* Chrome reflective border shimmer */
+.card,
+.list-item,
+.hero{
+  position: relative;
+  overflow:hidden;
+}
+.card::before,
+.list-item::before,
+.hero::before{
+  content:"";
+  position:absolute;
+  inset:-2px;
+  background: linear-gradient(115deg,
+    transparent 0%,
+    rgba(255,255,255,.18) 18%,
+    rgba(255,255,255,.06) 35%,
+    transparent 55%);
+  transform: translateX(-120%);
+  animation: shimmer 6.5s ease-in-out infinite;
+  pointer-events:none;
+  opacity:.55;
+}
+@keyframes shimmer{
+  0%, 70% { transform: translateX(-120%); }
+  85% { transform: translateX(120%); }
+  100% { transform: translateX(120%); }
+}
+
+/* ====== Hero panel ====== */
+.hero{
+  border-radius: var(--radius);
+  padding: 18px;
+  background: radial-gradient(900px 250px at 20% 0%, rgba(124,58,237,.20), transparent 60%),
+              radial-gradient(900px 250px at 85% 0%, rgba(6,182,212,.18), transparent 55%),
+              linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.04));
+  border: 1px solid rgba(255,255,255,.14);
+}
+
+/* ====== Buttons / Inputs ====== */
+.btn, .form-control, .form-select{
+  border-radius: 12px;
+}
+
+/* Primary button (neon) */
+.btn-dark{
+  border: 1px solid rgba(255,255,255,.10) !important;
+  background: linear-gradient(135deg, rgba(124,58,237,.95), rgba(6,182,212,.92)) !important;
+  box-shadow: 0 12px 28px rgba(6,182,212,.18);
+  color: #fff !important;
+}
+.btn-dark:hover{
+  transform: translateY(-1px);
+  filter: brightness(1.07);
+}
+
+/* Outline buttons */
+.btn-outline-dark{
+  color: rgba(243,246,255,.92) !important;
+  border-color: rgba(255,255,255,.22) !important;
+}
+.btn-outline-dark:hover{
+  background: rgba(255,255,255,.10) !important;
+  transform: translateY(-1px);
+}
+
+/* Inputs readable */
+.form-control, .form-select{
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.16);
+  color: rgba(243,246,255,.95);
+}
+.form-control::placeholder{ color: rgba(243,246,255,.70); }
+.form-control:focus, .form-select:focus{
+  border-color: rgba(6,182,212,.60);
+  box-shadow: 0 0 0 .25rem var(--ring);
+  background: rgba(255,255,255,.10);
+  color: rgba(243,246,255,.95);
+}
+
+/* make bootstrap hr softer */
+hr{ border-color: rgba(255,255,255,.14) !important; }
+
+/* ====== Text helpers ====== */
+.small-muted{
+  color: rgba(243,246,255,.86);
+  font-size: .95rem;
+}
+
+.section-title{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap:12px;
+  margin-bottom: 14px;
+}
+.section-title h3{
+  font-weight: 900;
+  margin: 0;
+  color: rgba(243,246,255,.98);
+}
+
+/* ====== List items ====== */
+.list-item{
+  border: 1px solid rgba(255,255,255,.14);
   border-radius: 16px;
-  border: 1px solid #eee;
+  padding: 12px;
+  background: rgba(255,255,255,.07);
+  margin-bottom: 10px;
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.list-item:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 16px 36px rgba(0,0,0,.28);
+  border-color: rgba(6,182,212,.28);
+}
+.list-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
 }
 
-h3, h5 { font-weight: 700; }
-
-.btn, .form-control, .form-select {
-  border-radius: 10px;
+/* ====== KPI blocks ====== */
+.kpi{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 10px;
+}
+.kpi .kpi-title{
+  color: rgba(243,246,255,.80);
+  font-size:.92rem;
+}
+.kpi .kpi-value{
+  font-size: 1.8rem;
+  font-weight: 900;
+  margin: 0;
+  color: rgba(243,246,255,.98);
+}
+.kpi-pill{
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size:.82rem;
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.08);
+  color: rgba(243,246,255,.92);
 }
 
-.badge { border-radius: 999px; }
+/* ====== Badges: readable ====== */
+.badge{
+  color: #fff !important;
+}
+.badge.text-bg-success{ box-shadow: 0 0 18px rgba(34,197,94,.18); }
+.badge.text-bg-info{ box-shadow: 0 0 18px rgba(6,182,212,.18); }
+.badge.text-bg-warning{ box-shadow: 0 0 18px rgba(245,158,11,.18); }
+.badge.text-bg-secondary{ box-shadow: 0 0 18px rgba(148,163,184,.10); }
+.badge.text-bg-dark{
+  background: rgba(255,255,255,.12) !important;
+  border: 1px solid rgba(255,255,255,.16);
+}
+
+/* ====== Small entrance animation ====== */
+.fade-in{
+  animation: fadeInUp .35s ease both;
+}
+@keyframes fadeInUp{
+  from{ opacity:0; transform: translateY(10px); }
+  to{ opacity:1; transform: translateY(0); }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce){
+  *{ animation: none !important; transition: none !important; }
+}
+
+/* ===== Fix: Bootstrap muted/small text not visible on dark theme ===== */
+.text-muted,
+.small,
+small,
+.card .text-muted,
+.list-item .text-muted {
+  color: rgba(243,246,255,.80) !important;
+}
+
+/* Fix: labels inside cards + light description text */
+.card label,
+.list-item label,
+.card p,
+.list-item p {
+  color: rgba(243,246,255,.92) !important;
+}
+
+/* Fix: “Due:” line and meta lines */
+.list-item .small,
+.list-item small {
+  color: rgba(243,246,255,.78) !important;
+}
+
+/* Fix: make links visible */
+a {
+  color: rgba(120,220,255,.92);
+}
+a:hover {
+  color: rgba(120,220,255,1);
+}
+
+/* Fix: placeholder still clear */
+.form-control::placeholder{
+  color: rgba(243,246,255,.70) !important;
+}

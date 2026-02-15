@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Deadlines - Digital Life Organizer</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <div id="navArea"></div>
+
+  <div class="container page-wrap fade-in">
+    <div class="section-title">
+      <div>
+        <h3>Deadlines</h3>
+        <div class="small-muted">Track important dates (immigration, housing, health, etc.).</div>
+      </div>
+      <button class="btn btn-outline-dark btn-sm" onclick="loadDeadlines()">Refresh</button>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <div class="card p-3 shadow-soft">
+          <h5 class="fw-bold mb-3">Add Deadline</h5>
+
+          <label class="form-label">Title</label>
+          <input id="title" class="form-control mb-2" placeholder="Example: Apply for OHIP">
+
+          <label class="form-label">Category</label>
+          <select id="category" class="form-select mb-2">
+            <option value="immigration">Immigration</option>
+            <option value="housing">Housing</option>
+            <option value="employment">Employment</option>
+            <option value="health">Health</option>
+            <option value="finance">Finance</option>
+            <option value="education">Education</option>
+            <option value="other" selected>Other</option>
+          </select>
+
+          <label class="form-label">Due Date</label>
+          <input id="due_date" type="date" class="form-control mb-2">
+
+          <label class="form-label">Priority</label>
+          <select id="priority" class="form-select mb-2">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+          </select>
+
+          <label class="form-label">Notes</label>
+          <textarea id="notes" class="form-control mb-3" rows="3" placeholder="Optional notes"></textarea>
+
+          <button class="btn btn-dark w-100" onclick="addDeadline()">Add</button>
+        </div>
+      </div>
+
+      <div class="col-lg-7">
+        <div class="card p-3 shadow-soft">
+          <h5 class="fw-bold mb-2">My Deadlines</h5>
+          <div id="list" class="text-muted">Loading...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/navbar.js"></script>
+  <script>
+    const token = localStorage.getItem("token");
+    const user = getUser();
+    if (!token || !user) window.location.href = "index.html";
+
+    renderNavbar();
+
+    async function loadDeadlines() {
+      const list = document.getElementById("list");
+      list.textContent = "Loading...";
+
+      try {
+        const data = await apiRequest("/deadlines", "GET", null, true);
+
+        if (!data.deadlines.length) {
+          list.innerHTML = "<p class='text-muted mb-0'>No deadlines yet.</p>";
+          return;
+        }
+
+        list.innerHTML = data.deadlines.map(d => `
+          <div class="list-item">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <b>${escapeHtml(d.title)}</b>
+                <div class="small-muted">
+                  ${d.category} • Priority: ${d.priority} • Due: ${d.due_date}
+                </div>
+                ${d.notes ? `<div class="mt-1">${escapeHtml(d.notes)}</div>` : ""}
+              </div>
+              <span class="badge ${d.status === "done" ? "text-bg-success" : "text-bg-warning"}">${d.status}</span>
+            </div>
+
+            <div class="list-actions mt-2">
+              <button class="btn btn-sm btn-outline-success" onclick="markDone(${d.id})">Mark Done</button>
+              <button class="btn btn-sm btn-outline-danger" onclick="deleteDeadline(${d.id})">Delete</button>
+            </div>
+          </div>
+        `).join("");
+
+      } catch (e) {
+        list.innerHTML = `<p class="text-danger mb-0">${e.message}</p>`;
+      }
+    }
+
+    async function addDeadline() {
+      const title = document.getElementById("title").value.trim();
+      const category = document.getElementById("category").value;
+      const due_date = document.getElementById("due_date").value;
+      const priority = document.getElementById("priority").value;
+      const notes = document.getElementById("notes").value.trim();
+
+      if (!title || !due_date) return alert("Title and Due Date are required.");
+
+      await apiRequest("/deadlines", "POST", { title, category, due_date, priority, notes }, true);
+
+      document.getElementById("title").value = "";
+      document.getElementById("due_date").value = "";
+      document.getElementById("notes").value = "";
+      document.getElementById("priority").value = "medium";
+      document.getElementById("category").value = "other";
+
+      loadDeadlines();
+    }
+
+    async function markDone(id) {
+      await apiRequest(`/deadlines/${id}`, "PUT", { status: "done" }, true);
+      loadDeadlines();
+    }
+
+    async function deleteDeadline(id) {
+      if (!confirm("Delete this deadline?")) return;
+      await apiRequest(`/deadlines/${id}`, "DELETE", null, true);
+      loadDeadlines();
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    loadDeadlines();
+  </script>
+</body>
+</html>

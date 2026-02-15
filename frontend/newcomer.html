@@ -4,44 +4,90 @@
   <title>Newcomer Dashboard - Digital Life Organizer</title>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="css/style.css">
 </head>
 
-<body class="bg-light">
-  <!-- NAVBAR -->
+<body>
   <div id="navArea"></div>
 
-  <div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h3 class="mb-0">Newcomer Dashboard</h3>
+  <div class="container page-wrap fade-in">
+    <div class="section-title">
+      <div>
+        <h3>Newcomer Dashboard</h3>
+        <div class="small-muted">Your tasks checklist + quick progress.</div>
+      </div>
       <button class="btn btn-outline-dark btn-sm" onclick="loadTasks()">Refresh</button>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="row g-3 mb-3">
+      <div class="col-md-4">
+        <div class="card p-3 shadow-soft">
+          <div class="kpi">
+            <div>
+              <div class="kpi-title">Pending Tasks</div>
+              <p class="kpi-value" id="pendingCount">-</p>
+            </div>
+            <span class="kpi-pill">To Do</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card p-3 shadow-soft">
+          <div class="kpi">
+            <div>
+              <div class="kpi-title">Completed</div>
+              <p class="kpi-value" id="doneCount">-</p>
+            </div>
+            <span class="kpi-pill">Done</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card p-3 shadow-soft">
+          <div class="kpi">
+            <div>
+              <div class="kpi-title">Tip</div>
+              <p class="mb-0 fw-bold">Check Deadlines</p>
+              <div class="small-muted">Stay ahead of important dates.</div>
+            </div>
+            <span class="kpi-pill">⭐</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="row g-3">
       <!-- Add Task -->
       <div class="col-lg-5">
-        <div class="card p-3 shadow-sm">
-          <h5 class="mb-3">Add Task</h5>
+        <div class="card p-3 shadow-soft">
+          <h5 class="mb-3 fw-bold">Add Task</h5>
 
           <label class="form-label">Title</label>
-          <input id="title" class="form-control mb-2" placeholder="Task title (required)">
+          <input id="title" class="form-control mb-2" placeholder="Example: Apply for SIN">
 
           <label class="form-label">Description</label>
-          <textarea id="description" class="form-control mb-2" rows="3" placeholder="Optional description"></textarea>
+          <textarea id="description" class="form-control mb-2" rows="3" placeholder="Optional details"></textarea>
 
           <label class="form-label">Due Date</label>
           <input id="due_date" type="date" class="form-control mb-3">
 
           <button class="btn btn-dark w-100" onclick="addTask()">Add Task</button>
+
+          <div class="small-muted mt-2">
+            Starter tasks may appear automatically for new users.
+          </div>
         </div>
       </div>
 
       <!-- Task List -->
       <div class="col-lg-7">
-        <div class="card p-3 shadow-sm">
-          <h5 class="mb-2">My Tasks</h5>
+        <div class="card p-3 shadow-soft">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold">My Tasks</h5>
+          </div>
+          <hr class="my-3">
           <div id="taskList" class="text-muted">Loading...</div>
         </div>
       </div>
@@ -53,7 +99,6 @@
   <script src="js/navbar.js"></script>
 
   <script>
-    // Protect page
     const token = localStorage.getItem("token");
     const user = getUser();
     if (!token || !user) window.location.href = "index.html";
@@ -68,23 +113,34 @@
       try {
         const data = await apiRequest("/tasks", "GET", null, true);
 
+        document.getElementById("pendingCount").textContent =
+          data.tasks.filter(t => t.status !== "completed").length;
+
+        document.getElementById("doneCount").textContent =
+          data.tasks.filter(t => t.status === "completed").length;
+
         if (!data.tasks.length) {
           list.innerHTML = "<p class='text-muted mb-0'>No tasks yet.</p>";
           return;
         }
 
         list.innerHTML = data.tasks.map(t => `
-          <div class="border rounded p-2 mb-2 bg-white">
+          <div class="list-item">
             <div class="d-flex justify-content-between align-items-start">
               <div>
-                <b>${escapeHtml(t.title)}</b>
-                ${t.description ? `<div class="small text-muted">${escapeHtml(t.description)}</div>` : ""}
-                <div class="small mt-1"><b>Due:</b> ${t.due_date ? t.due_date : "Not set"}</div>
+                <div class="d-flex gap-2 align-items-center">
+                  <b>${escapeHtml(t.title)}</b>
+                  ${t.is_starter == 1 ? `<span class="badge text-bg-info">starter</span>` : ``}
+                </div>
+                ${t.description ? `<div class="small-muted">${escapeHtml(t.description)}</div>` : ""}
+                <div class="small mt-1"><b>Due:</b> ${t.due_date ? formatDate(t.due_date) : "Not set"}</div>
               </div>
-              <span class="badge ${t.status === "completed" ? "text-bg-success" : "text-bg-secondary"}">${t.status}</span>
+              <span class="badge ${t.status === "completed" ? "text-bg-success" : "text-bg-secondary"}">
+                ${t.status}
+              </span>
             </div>
 
-            <div class="mt-2 d-flex gap-2">
+            <div class="list-actions mt-2">
               <button class="btn btn-sm btn-outline-success" onclick="markDone(${t.id})">Mark Done</button>
               <button class="btn btn-sm btn-outline-danger" onclick="deleteTask(${t.id})">Delete</button>
             </div>
@@ -105,11 +161,9 @@
 
       try {
         await apiRequest("/tasks", "POST", { title, description, due_date }, true);
-
         document.getElementById("title").value = "";
         document.getElementById("description").value = "";
         document.getElementById("due_date").value = "";
-
         loadTasks();
       } catch (e) {
         alert(e.message);
@@ -137,6 +191,15 @@
     }
 
     loadTasks();
+
+    function formatDate(d) {
+  try {
+    return new Date(d).toLocaleDateString();
+  } catch {
+    return d;
+  }
+}
+
   </script>
 </body>
 </html>
