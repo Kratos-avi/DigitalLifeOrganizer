@@ -337,28 +337,43 @@ a:hover {
   color: rgba(255,255,255,0.55) !important;
 }
 
-/* =========================================================
-   FINAL FIX: Select dropdown text visibility (IMPORTANT)
-   - Makes selected value readable
-   - Makes opened options readable
-========================================================= */
-select.glass-input,
-select.form-select.glass-input{
-  color: #ffffff !important;
-  background-color: rgba(255,255,255,0.08) !important;
+/* ==================== DROPDOWN FIX FOR ALL PAGES ==================== */
+
+/* Force font, text color, and background for select inputs */
+select.form-select,
+select.glass-input {
+  font-family: var(--font) !important; /* your Orbitron font */
+  color: #ffffff !important;           /* make selected value visible */
+  background-color: rgba(255,255,255,0.08) !important; /* keep glass look */
   border: 1px solid rgba(255,255,255,0.14) !important;
+  padding-right: 38px !important;      /* ensure arrow space */
 }
 
-/* When dropdown opens: options should be white on dark */
-select.glass-input option,
-select.form-select.glass-input option{
-  background: #0b0f18 !important;
+/* Make all options visible on dark background */
+select.form-select option,
+select.glass-input option {
+  background-color: #0B1220 !important;
+  color: #ffffff !important;
+  font-family: var(--font);
+  padding: 8px 12px;
+}
+
+/* Option hover */
+select.form-select option:hover,
+select.glass-input option:hover {
+  background-color: rgba(124,58,237,.4) !important;
   color: #ffffff !important;
 }
 
-/* Extra: focus ring stays clean */
-select.glass-input:focus,
-select.form-select.glass-input:focus{
-  outline: none !important;
-  box-shadow: 0 0 0 .25rem rgba(6,182,212,.18) !important;
+/* Neon arrow fix */
+select.form-select::after,
+select.glass-input::after {
+  content: "▼";
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--neon2);
+  text-shadow: 0 0 6px var(--neon2), 0 0 10px var(--neon1);
 }
