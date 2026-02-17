@@ -20,20 +20,23 @@
       <button class="btn btn-outline-dark btn-sm" onclick="loadTasks()">Refresh</button>
     </div>
 
-    <!-- KPI Cards -->
+    <!-- ✅ KPI Cards (Now 6) -->
     <div class="row g-3 mb-3">
-      <div class="col-md-4">
+      <!-- Pending -->
+      <div class="col-md-4 col-lg-2">
         <div class="card p-3 shadow-soft">
           <div class="kpi">
             <div>
-              <div class="kpi-title">Pending Tasks</div>
+              <div class="kpi-title">Pending</div>
               <p class="kpi-value" id="pendingCount">-</p>
             </div>
             <span class="kpi-pill">To Do</span>
           </div>
         </div>
       </div>
-      <div class="col-md-4">
+
+      <!-- Completed -->
+      <div class="col-md-4 col-lg-2">
         <div class="card p-3 shadow-soft">
           <div class="kpi">
             <div>
@@ -44,13 +47,54 @@
           </div>
         </div>
       </div>
-      <div class="col-md-4">
+
+      <!-- Upcoming deadlines -->
+      <div class="col-md-4 col-lg-2">
+        <div class="card p-3 shadow-soft">
+          <div class="kpi">
+            <div>
+              <div class="kpi-title">Deadlines (7d)</div>
+              <p class="kpi-value" id="kpiDeadlines7">-</p>
+            </div>
+            <span class="kpi-pill">Soon</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Work hours this week -->
+      <div class="col-md-4 col-lg-2">
+        <div class="card p-3 shadow-soft">
+          <div class="kpi">
+            <div>
+              <div class="kpi-title">Work (week)</div>
+              <p class="kpi-value" id="kpiWorkWeek">-</p>
+            </div>
+            <span class="kpi-pill">Hours</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Study hours this week -->
+      <div class="col-md-4 col-lg-2">
+        <div class="card p-3 shadow-soft">
+          <div class="kpi">
+            <div>
+              <div class="kpi-title">Study (week)</div>
+              <p class="kpi-value" id="kpiStudyWeek">-</p>
+            </div>
+            <span class="kpi-pill">Hours</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tip -->
+      <div class="col-md-4 col-lg-2">
         <div class="card p-3 shadow-soft">
           <div class="kpi">
             <div>
               <div class="kpi-title">Tip</div>
-              <p class="mb-0 fw-bold">Check Deadlines</p>
-              <div class="small-muted">Stay ahead of important dates.</div>
+              <p class="mb-0 fw-bold" id="kpiTipTitle">Check Deadlines</p>
+              <div class="small-muted" id="kpiTipBody">Stay ahead of important dates.</div>
             </div>
             <span class="kpi-pill">⭐</span>
           </div>
@@ -185,7 +229,33 @@
       catch { return d; }
     }
 
-    // Safe base64 encode/decode for passing object in onclick
+    function minsBetween(start, end) {
+      const [sh, sm] = String(start).split(":");
+      const [eh, em] = String(end).split(":");
+      const s = (parseInt(sh||0)*60) + parseInt(sm||0);
+      const e = (parseInt(eh||0)*60) + parseInt(em||0);
+      let diff = e - s;
+      if (diff <= 0) diff = (24*60 - s) + e;
+      return diff;
+    }
+
+    function fmtHM(mins) {
+      const h = Math.floor(mins / 60);
+      const m = mins % 60;
+      return `${h}h ${m}m`;
+    }
+
+    // Monday of current week
+    function mondayOf(d) {
+      const x = new Date(d);
+      const day = (x.getDay() + 6) % 7;
+      x.setDate(x.getDate() - day);
+      x.setHours(0,0,0,0);
+      return x;
+    }
+    function ymd(d){ return d.toISOString().slice(0,10); }
+
+    // Safe base64 encode/decode
     function toB64(obj) {
       return btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
     }
@@ -223,19 +293,114 @@
       }
     });
 
-    // ---------- API Calls ----------
+    // ---------- KPI Loaders ----------
     async function loadSummary() {
       const data = await apiRequest("/tasks/summary", "GET", null, true);
       document.getElementById("pendingCount").textContent = data.pending ?? 0;
       document.getElementById("doneCount").textContent = data.completed ?? 0;
     }
 
+    async function loadDeadlinesKpi() {
+      try {
+        const data = await apiRequest("/deadlines", "GET", null, true);
+        const deadlines = data.deadlines || [];
+
+        const today = new Date();
+        today.setHours(0,0,0,0);
+
+        const in7 = new Date(today);
+        in7.setDate(in7.getDate() + 7);
+
+        const upcoming = deadlines.filter(d => {
+          if (!d.due_date) return false;
+          const dd = new Date(String(d.due_date).slice(0,10) + "T00:00:00");
+          return dd >= today && dd <= in7 && d.status !== "done";
+        });
+
+        document.getElementById("kpiDeadlines7").textContent = upcoming.length;
+
+        if (upcoming.length > 0) {
+          document.getElementById("kpiTipTitle").textContent = "Deadline soon";
+          document.getElementById("kpiTipBody").textContent = "You have deadlines in the next 7 days.";
+        }
+      } catch {
+        document.getElementById("kpiDeadlines7").textContent = "-";
+      }
+    }
+
+    async function loadWorkWeekKpi() {
+      try {
+        const ws = mondayOf(new Date());
+        const wsStr = ymd(ws);
+
+        const gen = await apiRequest(`/work-templates/generate?weekStart=${wsStr}`, "GET", null, true);
+        const events = gen.events || [];
+
+        let total = 0;
+        for (const e of events) total += Math.max(0, minsBetween(e.start_time, e.end_time));
+
+        document.getElementById("kpiWorkWeek").textContent = fmtHM(total);
+
+        if (total > 24*60) {
+          document.getElementById("kpiTipTitle").textContent = "Work hours high";
+          document.getElementById("kpiTipBody").textContent = "You are over 24h this week. Be careful.";
+        }
+      } catch {
+        document.getElementById("kpiWorkWeek").textContent = "-";
+      }
+    }
+
+    async function loadStudyWeekKpi() {
+      try {
+        // We generate for current month then filter to this week range
+        const today = new Date();
+        const month = String(today.getMonth()+1).padStart(2,"0");
+        const monthStr = `${today.getFullYear()}-${month}`;
+
+        const gen = await apiRequest(`/study-templates/generate?month=${monthStr}`, "GET", null, true);
+        const events = gen.events || [];
+
+        const ws = mondayOf(new Date());
+        const we = new Date(ws);
+        we.setDate(we.getDate() + 6);
+
+        const wsKey = ymd(ws);
+        const weKey = ymd(we);
+
+        let total = 0;
+        for (const e of events) {
+          if (e.date >= wsKey && e.date <= weKey) {
+            total += Math.max(0, minsBetween(e.start_time, e.end_time));
+          }
+        }
+
+        document.getElementById("kpiStudyWeek").textContent = fmtHM(total);
+
+        if (total < 10*60) {
+          document.getElementById("kpiTipTitle").textContent = "Study reminder";
+          document.getElementById("kpiTipBody").textContent = "Try to reach 10h+ study this week.";
+        }
+      } catch {
+        document.getElementById("kpiStudyWeek").textContent = "-";
+      }
+    }
+
+    async function loadAllKpis() {
+      await Promise.all([
+        loadSummary(),
+        loadDeadlinesKpi(),
+        loadWorkWeekKpi(),
+        loadStudyWeekKpi()
+      ]);
+    }
+
+    // ---------- Tasks ----------
     async function loadTasks() {
       const list = document.getElementById("taskList");
       list.textContent = "Loading...";
 
       try {
-        await loadSummary();
+        await loadAllKpis();
 
         const qs = new URLSearchParams({
           q: state.q,
@@ -246,7 +411,6 @@
 
         const data = await apiRequest("/tasks?" + qs.toString(), "GET", null, true);
 
-        // Backend returns: page, totalPages, tasks
         state.totalPages = data.totalPages || 1;
 
         document.getElementById("pageInfo").textContent = `Page ${data.page} / ${state.totalPages}`;
@@ -368,7 +532,7 @@
       const title = document.getElementById("edit_title").value.trim();
       const description = document.getElementById("edit_description").value.trim();
       const due_date = document.getElementById("edit_due_date").value || null;
-      const status = document.getElementById("edit_status").value;  
+      const status = document.getElementById("edit_status").value;
 
       if (!title) return notify("Title is required!", "error");
 
