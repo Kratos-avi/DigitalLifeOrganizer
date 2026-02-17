@@ -11,6 +11,14 @@
   const announcementRoutes = require("./src/routes/announcements.routes");
   const adminRoutes = require("./src/routes/admin.routes");
   const profileRoutes = require("./src/routes/profile.routes");
+  const workScheduleRoutes = require("./src/routes/workSchedule.routes");
+  const studyScheduleRoutes = require("./src/routes/studySchedule.routes");
+  const studyTemplateRoutes = require("./src/routes/studyTemplates.routes");
+  const workTemplateRoutes = require("./src/routes/workTemplates.routes");
+
+  
+
+
 
   const app = express();
 
@@ -57,6 +65,14 @@
   app.use("/api/announcements", announcementRoutes);
   app.use("/api/admin", adminRoutes);
   app.use("/api/profile", profileRoutes);
+  app.use("/api/work-schedule", workScheduleRoutes);
+  app.use("/api/study-schedule", studyScheduleRoutes);
+  app.use("/api/study-templates", studyTemplateRoutes);
+  app.use("/api/work-templates", workTemplateRoutes);
+
+
+  
+
 
   // 404 handler
   app.use((req, res) => {

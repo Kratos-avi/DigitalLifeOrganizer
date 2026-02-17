@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Study Schedule - Digital Life Organizer</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+<div id="navArea"></div>
+
+<div class="container page-wrap fade-in">
+  <div class="section-title">
+    <div>
+      <h3>Study Schedule (Monthly Calendar)</h3>
+      <div class="small-muted">Recurring timetable for 4 months • Week 8 automatically skipped.</div>
+    </div>
+    <div class="d-flex gap-2">
+      <button class="btn btn-outline-dark btn-sm" onclick="prevMonth()">Prev</button>
+      <button class="btn btn-outline-dark btn-sm" onclick="nextMonth()">Next</button>
+      <button class="btn btn-outline-dark btn-sm" onclick="refreshAll()">Refresh</button>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <!-- Add recurring template -->
+    <div class="col-lg-5">
+      <div class="card p-3 shadow-soft mb-3">
+        <h5 class="fw-bold mb-2">Add Timetable (Repeats Weekly)</h5>
+
+        <label class="form-label">Subject</label>
+        <input id="t_subject" class="form-control mb-2" placeholder="Example: PROG / Math">
+
+        <label class="form-label">Weekday</label>
+        <select id="t_weekday" class="form-select mb-2">
+          <option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option>
+          <option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option>
+          <option value="7">Sunday</option>
+        </select>
+
+        <div class="row g-2">
+          <div class="col">
+            <label class="form-label">Start</label>
+            <input id="t_start" type="time" class="form-control mb-2">
+          </div>
+          <div class="col">
+            <label class="form-label">End</label>
+            <input id="t_end" type="time" class="form-control mb-2">
+          </div>
+        </div>
+
+        <label class="form-label">Term Start</label>
+        <input id="t_start_date" type="date" class="form-control mb-2">
+
+        <label class="form-label">Term End (4 months)</label>
+        <input id="t_end_date" type="date" class="form-control mb-2">
+
+        <label class="form-label">Notes</label>
+        <input id="t_notes" class="form-control mb-3" placeholder="Optional">
+
+        <div class="small-muted mb-2">Week 8 will be skipped automatically ✅</div>
+
+        <button class="btn btn-dark w-100" onclick="addTemplate()">Save Timetable</button>
+      </div>
+
+      <!-- Templates list -->
+      <div class="card p-3 shadow-soft">
+        <h5 class="fw-bold mb-2">My Timetable Templates</h5>
+        <div id="tplList" class="text-muted">Loading...</div>
+      </div>
+    </div>
+
+    <!-- Calendar -->
+    <div class="col-lg-7">
+      <div class="card p-3 shadow-soft">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="fw-bold mb-0" id="monthTitle">Month</h5>
+          <span class="kpi-pill" id="monthHint">Calendar</span>
+        </div>
+        <hr class="my-3">
+        <div id="calendar"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/navbar.js"></script>
+
+<script>
+  const token = localStorage.getItem("token");
+  const user = getUser();
+  if (!token || !user) window.location.href = "index.html";
+  renderNavbar();
+
+  function escapeHtml(str) {
+    return String(str ?? "")
+      .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;").replaceAll("'","&#039;");
+  }
+
+  function ymd(d){ return d.toISOString().slice(0,10); }
+
+  // current month pointer
+  let cur = new Date();
+  cur = new Date(cur.getFullYear(), cur.getMonth(), 1);
+
+  function monthStr(d){
+    const m = String(d.getMonth()+1).padStart(2,"0");
+    return `${d.getFullYear()}-${m}`;
+  }
+
+  function prevMonth(){ cur = new Date(cur.getFullYear(), cur.getMonth()-1, 1); refreshAll(); }
+  function nextMonth(){ cur = new Date(cur.getFullYear(), cur.getMonth()+1, 1); refreshAll(); }
+
+  async function refreshAll(){
+    await loadTemplates();
+    await loadCalendar();
+  }
+
+  // ---------- Templates ----------
+  async function loadTemplates(){
+    const box = document.getElementById("tplList");
+    box.textContent = "Loading...";
+    try{
+      const data = await apiRequest("/study-templates", "GET", null, true);
+      const tpls = data.templates || [];
+      if(!tpls.length){
+        box.innerHTML = "<div class='text-muted'>No templates yet.</div>";
+        return;
+      }
+      const wd = ["","Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+      box.innerHTML = tpls.map(t => `
+        <div class="list-item">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <b>${escapeHtml(t.subject)}</b>
+              <div class="small-muted">${wd[t.weekday]} • ${t.start_time} - ${t.end_time}</div>
+              <div class="small-muted">${t.start_date} → ${t.end_date}</div>
+              ${t.notes ? `<div class="small-muted">${escapeHtml(t.notes)}</div>` : ""}
+            </div>
+            <button class="btn btn-sm btn-outline-danger" onclick="delTemplate(${t.id})">Delete</button>
+          </div>
+        </div>
+      `).join("");
+    }catch(e){
+      box.innerHTML = `<div class="text-danger">${escapeHtml(e.message)}</div>`;
+    }
+  }
+
+  async function addTemplate(){
+    const subject = document.getElementById("t_subject").value.trim();
+    const weekday = document.getElementById("t_weekday").value;
+    const start_time = document.getElementById("t_start").value;
+    const end_time = document.getElementById("t_end").value;
+    const start_date = document.getElementById("t_start_date").value;
+    const end_date = document.getElementById("t_end_date").value;
+    const notes = document.getElementById("t_notes").value.trim();
+
+    if(!subject || !weekday || !start_time || !end_time || !start_date || !end_date){
+      return toast("All fields required (except notes)", "error");
+    }
+
+    await apiRequest("/study-templates", "POST",
+      { subject, weekday, start_time, end_time, start_date, end_date, notes }, true);
+
+    toast("Timetable saved ✅", "success");
+    document.getElementById("t_subject").value = "";
+    document.getElementById("t_start").value = "";
+    document.getElementById("t_end").value = "";
+    document.getElementById("t_notes").value = "";
+    refreshAll();
+  }
+
+  async function delTemplate(id){
+    if(!confirm("Delete this timetable template?")) return;
+    await apiRequest(`/study-templates/${id}`, "DELETE", null, true);
+    toast("Deleted 🗑️", "info");
+    refreshAll();
+  }
+
+  // ---------- Calendar ----------
+  async function loadCalendar(){
+    const cal = document.getElementById("calendar");
+    cal.innerHTML = "Loading...";
+
+    const ms = monthStr(cur);
+    document.getElementById("monthTitle").textContent =
+      cur.toLocaleString(undefined, { month: "long", year: "numeric" });
+
+    // get generated events for this month
+    const gen = await apiRequest(`/study-templates/generate?month=${ms}`, "GET", null, true);
+    const events = gen.events || [];
+
+    // map by date
+    const map = {};
+    for(const e of events){
+      if(!map[e.date]) map[e.date] = [];
+      map[e.date].push(e);
+    }
+
+    // build calendar grid
+    const first = new Date(cur.getFullYear(), cur.getMonth(), 1);
+    const last = new Date(cur.getFullYear(), cur.getMonth()+1, 0);
+    // monday-based index
+    const mondayIndex = (first.getDay() + 6) % 7; // 0..6
+    const daysInMonth = last.getDate();
+
+    const headers = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+    let html = `
+      <div class="d-grid" style="grid-template-columns: repeat(7, 1fr); gap: 10px;">
+        ${headers.map(h=>`<div class="small-muted fw-bold">${h}</div>`).join("")}
+    `;
+
+    // empty cells
+    for(let i=0;i<mondayIndex;i++){
+      html += `<div class="p-2 rounded-3" style="opacity:.35;"></div>`;
+    }
+
+    for(let day=1; day<=daysInMonth; day++){
+      const d = new Date(cur.getFullYear(), cur.getMonth(), day);
+      const dateKey = ymd(d);
+      const items = (map[dateKey] || []).sort((a,b)=>String(a.start_time).localeCompare(String(b.start_time)));
+
+      html += `
+        <div class="p-2 rounded-4 shadow-soft" style="min-height: 110px;">
+          <div class="d-flex justify-content-between">
+            <b>${day}</b>
+            ${items.some(x=>x.weekNumber===8) ? `<span class="badge text-bg-warning">wk8</span>` : ``}
+          </div>
+          <div class="mt-1" style="display:flex; flex-direction:column; gap:6px;">
+            ${
+              items.slice(0,3).map(it => `
+                <div class="badge text-bg-dark text-wrap" style="text-align:left;">
+                  ${escapeHtml(it.start_time)}-${escapeHtml(it.end_time)} • ${escapeHtml(it.subject)}
+                </div>
+              `).join("")
+            }
+            ${
+              items.length > 3 ? `<div class="small-muted">+${items.length-3} more</div>` : ``
+            }
+          </div>
+        </div>
+      `;
+    }
+
+    html += `</div>`;
+    cal.innerHTML = html;
+  }
+
+  // Prefill term end to 4 months from today
+  (function initDefaults(){
+    const today = new Date();
+    document.getElementById("t_start_date").value = ymd(today);
+    const end = new Date(today);
+    end.setMonth(end.getMonth() + 4);
+    document.getElementById("t_end_date").value = ymd(end);
+  })();
+
+  refreshAll();
+</script>
+</body>
+</html>

@@ -31,20 +31,38 @@ function renderNavbar() {
           ${
             token && user
               ? `
-                <!-- Main Links -->
+                <!-- Dashboard -->
                 <a class="btn btn-outline-dark btn-sm" href="${dashboardLink}">
                   Dashboard
                 </a>
 
+                <!-- Deadlines -->
                 <a class="btn btn-outline-dark btn-sm" href="deadlines.html">
                   Deadlines
                 </a>
 
+                ${
+                  user.role === "newcomer"
+                    ? `
+                      <!-- Work Schedule -->
+                      <a class="btn btn-outline-dark btn-sm" href="work-schedule.html">
+                        Work Schedule
+                      </a>
+
+                      <!-- Study Schedule -->
+                      <a class="btn btn-outline-dark btn-sm" href="study-schedule.html">
+                        Study Schedule
+                      </a>
+                    `
+                    : ``
+                }
+
+                <!-- Announcements -->
                 <a class="btn btn-outline-dark btn-sm" href="announcements.html">
                   Announcements
                 </a>
 
-                <!-- NEW: Profile -->
+                <!-- Profile -->
                 <a class="btn btn-outline-dark btn-sm" href="profile.html">
                   Profile
                 </a>
