@@ -14,13 +14,15 @@ const router = express.Router();
 router.get("/me", protect, async (req, res) => {
   try {
     const [rows] = await pool.query(
-      "SELECT id, full_name, email, role FROM users WHERE id = ?",
+      "SELECT id, full_name, email, role, plan FROM users WHERE id = ?",
       [req.user.id]
     );
 
     if (!rows.length) return res.status(404).json({ message: "User not found" });
 
-    res.json({ user: rows[0] });
+    const user = rows[0];
+    user.plan = user.plan || "free";
+    res.json({ user });
   } catch (err) {
     console.error("profile me error:", err);
     res.status(500).json({ message: "Server error" });

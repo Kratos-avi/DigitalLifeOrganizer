@@ -11,7 +11,7 @@ const router = express.Router();
 ================================= */
 function makeToken(user) {
   return jwt.sign(
-    { id: user.id, email: user.email, role: user.role },
+    { id: user.id, email: user.email, role: user.role, plan: user.plan },
     process.env.JWT_SECRET,
     { expiresIn: "7d" }
   );
@@ -48,14 +48,15 @@ router.post("/register", async (req, res) => {
 
     // Insert user
     const [result] = await pool.query(
-      "INSERT INTO users (full_name, email, password_hash, role) VALUES (?,?,?,?)",
-      [full_name, email, password_hash, safeRole]
+      "INSERT INTO users (full_name, email, password_hash, role, plan) VALUES (?,?,?,?,?)",
+      [full_name, email, password_hash, safeRole, "free"]
     );
 
     const user = {
       id: result.insertId,
       email,
-      role: safeRole
+      role: safeRole,
+      plan: "free"
     };
 
     /* ===============================
@@ -105,7 +106,7 @@ router.post("/login", async (req, res) => {
     }
 
     const [rows] = await pool.query(
-      "SELECT id, email, role, password_hash FROM users WHERE email = ?",
+      "SELECT id, email, role, plan, password_hash FROM users WHERE email = ?",
       [email]
     );
 
@@ -124,7 +125,8 @@ router.post("/login", async (req, res) => {
     const user = {
       id: u.id,
       email: u.email,
-      role: u.role
+      role: u.role,
+      plan: u.plan || "free"
     };
 
     const token = makeToken(user);

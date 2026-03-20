@@ -264,7 +264,26 @@ hr{ border-color: rgba(255,255,255,.14) !important; }
   border: 1px solid rgba(255,255,255,.16);
 }
 
-/* ====== Small entrance animation ====== */
+/* ====== Plan Badges (Free / Premium) ====== */
+.plan-badge-free {
+  background: rgba(255,255,255,.12) !important;
+  border: 1px solid rgba(255,255,255,.22);
+  color: rgba(243,246,255,.92) !important;
+  font-size: .78rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.plan-badge-premium {
+  background: linear-gradient(135deg, rgba(124,58,237,.85), rgba(245,158,11,.80)) !important;
+  border: 1px solid rgba(245,158,11,.40);
+  color: #fff !important;
+  font-size: .78rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  box-shadow: 0 0 14px rgba(245,158,11,.30), 0 0 22px rgba(124,58,237,.20);
+}
+
 .fade-in{
   animation: fadeInUp .35s ease both;
 }

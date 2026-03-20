@@ -72,6 +72,13 @@ function renderNavbar() {
                   ${user.email} (${user.role})
                 </span>
 
+                <!-- Plan Badge -->
+                ${
+                  user.plan === "premium"
+                    ? `<span class="badge plan-badge-premium ms-1">⭐ Premium</span>`
+                    : `<span class="badge plan-badge-free ms-1">Free</span>`
+                }
+
                 <!-- Logout -->
                 <button class="btn btn-dark btn-sm" onclick="logout()">
                   Logout

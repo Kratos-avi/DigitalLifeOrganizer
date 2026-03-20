@@ -34,6 +34,9 @@
           <div class="small-muted mb-2">Role</div>
           <div class="mb-3 fw-bold" id="roleBox">-</div>
 
+          <div class="small-muted mb-2">Plan</div>
+          <div class="mb-3" id="planBox">-</div>
+
           <button class="btn btn-dark w-100" onclick="saveProfile()">Save Profile</button>
         </div>
       </div>
@@ -79,6 +82,14 @@
         document.getElementById("emailBox").textContent = data.user.email;
         document.getElementById("roleBox").textContent = data.user.role;
         document.getElementById("full_name").value = data.user.full_name || "";
+
+        const plan = data.user.plan || "free";
+        const planBox = document.getElementById("planBox");
+        if (plan === "premium") {
+          planBox.innerHTML = '<span class="badge plan-badge-premium">⭐ Premium</span>';
+        } else {
+          planBox.innerHTML = '<span class="badge plan-badge-free">Free</span>';
+        }
       } catch (e) {
         toast(e.message, "error");
       }
