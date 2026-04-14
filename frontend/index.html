@@ -101,27 +101,18 @@
 
       if (!validateEmail(email)) {
         setFieldError(emailEl, "Enter a valid email address");
-              <div class="hero-split">
-                <div class="hero-copy">
-                  <h3 class="mb-1 fw-bold">Welcome back</h3>
-                  <p class="lead">Track deadlines, manage tasks, and stay organized in one focused command center.</p>
-                  <div class="feature-row">
-                    <span class="feature-chip"><span class="dot"></span>JWT-secured access</span>
-                    <span class="feature-chip"><span class="dot"></span>Fast task tracking</span>
-                    <span class="feature-chip"><span class="dot"></span>Role-based dashboard</span>
-                  </div>
-                </div>
-                <div class="hero-panel">
-                  <div class="small-muted mb-1">Deployment-ready demo</div>
-                  <strong>Sign in and present the live workflow</strong>
-                  <div class="small-muted mt-1">Built for newcomer and admin roles.</div>
-                </div>
+        emailEl.focus();
+        return;
+      }
+
+      if (!password) {
+        setFieldError(passwordEl, "Password is required");
         passwordEl.focus();
         return;
       }
 
       btn.disabled = true;
-                <div class="d-inline-flex align-items-center gap-2 mb-2 text-uppercase fw-semibold small-muted">
+      try {
         const data = await apiRequest("/auth/login", "POST", { email, password }, false);
         if (data.token) {
           saveAuth(data.token, data.user);

@@ -1,79 +1,53 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800&family=Rajdhani:wght@400;500;600;700&display=swap');
-
 :root{
-  --bgA:#03050B;
-  --bgB:#07111E;
-  --bgC:#0B1526;
-  --text:#F5F7FF;
-  --muted: rgba(245,247,255,.76);
-  --accentBlue:#4CC9F0;
-  --accentRed:#FF5C7A;
-  --accentGold:#F6C453;
+  --bgA:#070A12;        /* deep navy */
+  --bgB:#0B1220;        /* darker blue */
+  --neon1:#7C3AED;      /* violet */
+  --neon2:#06B6D4;      /* cyan */
+  --neon3:#22C55E;      /* green */
+
+  --text:#F3F6FF;       /* brighter main text */
+  --muted: rgba(243,246,255,.86); /* brighter muted */
+
   --glass: rgba(255,255,255,.06);
   --glass2: rgba(255,255,255,.10);
   --border: rgba(255,255,255,.14);
   --shadow: rgba(0,0,0,.45);
-  --radius: 20px;
-  --ring: rgba(76,201,240,.28);
+
+  --radius: 18px;
+  --ring: rgba(6,182,212,.22);
 }
 
+/* ====== Background (digital metallic) ====== */
 *{ box-sizing:border-box; }
 html, body{ height:100%; }
 body{
-  font-family: 'Rajdhani', system-ui, -apple-system, Segoe UI, Arial, sans-serif;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   color: var(--text);
   background:
-    radial-gradient(circle at 15% 15%, rgba(76,201,240,.22), transparent 0 26%),
-    radial-gradient(circle at 84% 14%, rgba(255,92,122,.18), transparent 0 24%),
-    radial-gradient(circle at 50% 100%, rgba(246,196,83,.08), transparent 0 36%),
-    radial-gradient(circle at 50% 50%, rgba(255,255,255,.03) 0 2px, transparent 2px 100%),
-    linear-gradient(180deg, var(--bgA), var(--bgB) 48%, var(--bgC));
+    radial-gradient(900px 500px at 12% 8%, rgba(124,58,237,.25), transparent 60%),
+    radial-gradient(900px 520px at 88% 10%, rgba(6,182,212,.22), transparent 60%),
+    radial-gradient(900px 520px at 50% 110%, rgba(34,197,94,.12), transparent 55%),
+    linear-gradient(180deg, var(--bgA), var(--bgB));
   overflow-x:hidden;
 }
 
-body::before,
-body::after{
+/* Subtle animated grid */
+body::before{
   content:"";
   position:fixed;
-  inset:-20%;
+  inset:-2px;
   pointer-events:none;
-  z-index:-1;
-}
-
-body::before{
-  opacity:.20;
+  opacity:.25;
   background-image:
-    radial-gradient(circle at 20% 20%, rgba(255,255,255,.85) 0 1px, transparent 1px 100%),
-    radial-gradient(circle at 70% 30%, rgba(255,255,255,.6) 0 1px, transparent 1px 100%),
-    radial-gradient(circle at 40% 70%, rgba(255,255,255,.75) 0 1px, transparent 1px 100%),
-    radial-gradient(circle at 85% 80%, rgba(255,255,255,.55) 0 1px, transparent 1px 100%);
-  background-size: 240px 240px, 320px 320px, 280px 280px, 380px 380px;
-  animation: driftStars 48s linear infinite;
+    linear-gradient(to right, rgba(255,255,255,.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,.06) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(closest-side at 50% 30%, rgba(0,0,0,.9), transparent 72%);
+  animation: gridFloat 10s ease-in-out infinite;
 }
-
-body::after{
-  opacity:.18;
-  background-image:
-    linear-gradient(to right, rgba(255,255,255,.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255,255,255,.05) 1px, transparent 1px);
-  background-size: 72px 72px;
-  mask-image: radial-gradient(circle at center, black 30%, transparent 84%);
-  animation: gridFloat 12s ease-in-out infinite;
-}
-
-@keyframes driftStars{
-  from{ transform: translate3d(0, 0, 0) scale(1); }
-  to{ transform: translate3d(-3%, 2%, 0) scale(1.02); }
-}
-
 @keyframes gridFloat{
   0%,100%{ transform: translateY(0); }
-  50%{ transform: translateY(-12px); }
-}
-
-h1,h2,h3,h4,h5,.navbar-brand,.kpi-value,.section-title h3{
-  font-family: 'Orbitron', 'Rajdhani', sans-serif;
-  letter-spacing: .02em;
+  50%{ transform: translateY(-14px); }
 }
 
 /* ====== Navbar (glass + glow) ====== */
@@ -81,16 +55,14 @@ h1,h2,h3,h4,h5,.navbar-brand,.kpi-value,.section-title h3{
   position: sticky;
   top: 0;
   z-index: 999;
-  background: rgba(6,10,18,.78) !important;
-  backdrop-filter: blur(18px);
+  background: rgba(12,18,32,.62) !important;
+  backdrop-filter: blur(16px);
   border-bottom: 1px solid rgba(255,255,255,.10);
-  box-shadow: 0 8px 30px rgba(0,0,0,.28);
 }
 
 .navbar .navbar-brand{
   color: var(--text) !important;
-  letter-spacing:.06em;
-  text-transform: uppercase;
+  letter-spacing:.2px;
 }
 
 /* Make navbar text readable */
@@ -102,17 +74,17 @@ h1,h2,h3,h4,h5,.navbar-brand,.kpi-value,.section-title h3{
   width:12px;
   height:12px;
   border-radius:999px;
-  background: linear-gradient(135deg, var(--accentBlue), var(--accentRed));
-  box-shadow: 0 0 18px rgba(76,201,240,.45), 0 0 28px rgba(255,92,122,.25);
+  background: linear-gradient(135deg, var(--neon1), var(--neon2));
+  box-shadow: 0 0 18px rgba(6,182,212,.35), 0 0 28px rgba(124,58,237,.25);
 }
 
 /* ====== Containers ====== */
-.page-wrap{ padding: 28px 0 44px; }
+.page-wrap{ padding: 26px 0 36px; }
 
 /* ====== Metallic Glass Cards ====== */
 .card{
   border-radius: var(--radius);
-  background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
+  background: linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.04));
   border: 1px solid rgba(255,255,255,.14);
   color: rgba(243,246,255,.94);
   backdrop-filter: blur(12px);
@@ -154,74 +126,11 @@ h1,h2,h3,h4,h5,.navbar-brand,.kpi-value,.section-title h3{
 /* ====== Hero panel ====== */
 .hero{
   border-radius: var(--radius);
-  padding: 20px;
-  background:
-    radial-gradient(900px 250px at 20% 0%, rgba(76,201,240,.18), transparent 60%),
-    radial-gradient(900px 250px at 85% 0%, rgba(255,92,122,.16), transparent 55%),
-    linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.04));
+  padding: 18px;
+  background: radial-gradient(900px 250px at 20% 0%, rgba(124,58,237,.20), transparent 60%),
+              radial-gradient(900px 250px at 85% 0%, rgba(6,182,212,.18), transparent 55%),
+              linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.04));
   border: 1px solid rgba(255,255,255,.14);
-}
-
-.hero-split{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:16px;
-  flex-wrap:wrap;
-}
-
-.hero-copy{
-  max-width: 720px;
-}
-
-.hero-copy h3,
-.hero-copy h2{
-  margin-bottom: .35rem;
-}
-
-.hero-copy .lead{
-  color: rgba(245,247,255,.82);
-  margin-bottom: 0;
-}
-
-.hero-panel{
-  min-width: 220px;
-  padding: 14px 16px;
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(4,8,16,.40);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
-}
-
-.hero-panel strong{
-  font-size: 1.05rem;
-}
-
-.feature-row{
-  display:flex;
-  flex-wrap:wrap;
-  gap:10px;
-  margin-top: 14px;
-}
-
-.feature-chip{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  padding: 8px 12px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,.14);
-  background: rgba(255,255,255,.06);
-  color: rgba(245,247,255,.92);
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,.03);
-}
-
-.feature-chip .dot{
-  width:8px;
-  height:8px;
-  border-radius:999px;
-  background: linear-gradient(135deg, var(--accentBlue), var(--accentRed));
-  box-shadow: 0 0 12px rgba(76,201,240,.40);
 }
 
 /* ====== Buttons / Inputs ====== */
@@ -232,8 +141,8 @@ h1,h2,h3,h4,h5,.navbar-brand,.kpi-value,.section-title h3{
 /* Primary button (neon) */
 .btn-dark{
   border: 1px solid rgba(255,255,255,.10) !important;
-  background: linear-gradient(135deg, rgba(255,92,122,.95), rgba(76,201,240,.90)) !important;
-  box-shadow: 0 12px 28px rgba(76,201,240,.16);
+  background: linear-gradient(135deg, rgba(124,58,237,.95), rgba(6,182,212,.92)) !important;
+  box-shadow: 0 12px 28px rgba(6,182,212,.18);
   color: #fff !important;
 }
 .btn-dark:hover{
@@ -245,7 +154,6 @@ h1,h2,h3,h4,h5,.navbar-brand,.kpi-value,.section-title h3{
 .btn-outline-dark{
   color: rgba(243,246,255,.92) !important;
   border-color: rgba(255,255,255,.22) !important;
-  background: rgba(255,255,255,.02);
 }
 .btn-outline-dark:hover{
   background: rgba(255,255,255,.10) !important;
@@ -259,12 +167,6 @@ h1,h2,h3,h4,h5,.navbar-brand,.kpi-value,.section-title h3{
   color: rgba(243,246,255,.95);
 }
 
-.glass-input{
-  background: rgba(255,255,255,.07) !important;
-  border: 1px solid rgba(255,255,255,.16) !important;
-  color: rgba(243,246,255,.95) !important;
-}
-
 /* Make select arrow visible in dark theme (Bootstrap uses SVG arrow) */
 .form-select{
   color: rgba(243,246,255,.95) !important;
@@ -275,7 +177,7 @@ h1,h2,h3,h4,h5,.navbar-brand,.kpi-value,.section-title h3{
 .form-control::placeholder{ color: rgba(243,246,255,.70); }
 
 .form-control:focus, .form-select:focus{
-  border-color: rgba(76,201,240,.65);
+  border-color: rgba(6,182,212,.60);
   box-shadow: 0 0 0 .25rem var(--ring);
   background: rgba(255,255,255,.10);
   color: rgba(243,246,255,.95);
@@ -296,8 +198,6 @@ hr{ border-color: rgba(255,255,255,.14) !important; }
   align-items:flex-end;
   gap:12px;
   margin-bottom: 14px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(255,255,255,.08);
 }
 .section-title h3{
   font-weight: 900;
@@ -358,233 +258,3 @@ hr{ border-color: rgba(255,255,255,.14) !important; }
 .badge.text-bg-success{ box-shadow: 0 0 18px rgba(34,197,94,.18); }
 .badge.text-bg-info{ box-shadow: 0 0 18px rgba(6,182,212,.18); }
 .badge.text-bg-warning{ box-shadow: 0 0 18px rgba(245,158,11,.18); }
-
-.fade-in{
-  animation: fadeUp .55s ease both;
-}
-
-@keyframes fadeUp{
-  from{ opacity:0; transform: translateY(12px); }
-  to{ opacity:1; transform: translateY(0); }
-}
-
-@media (max-width: 767.98px){
-  .section-title{
-    align-items:flex-start;
-    flex-direction:column;
-  }
-
-  .hero{
-    padding: 18px;
-  }
-
-  .navbar .container{
-    gap: 10px;
-  }
-}
-.badge.text-bg-secondary{ box-shadow: 0 0 18px rgba(148,163,184,.10); }
-.badge.text-bg-dark{
-  background: rgba(255,255,255,.12) !important;
-  border: 1px solid rgba(255,255,255,.16);
-}
-
-/* ====== Small entrance animation ====== */
-.fade-in{
-  animation: fadeInUp .35s ease both;
-}
-@keyframes fadeInUp{
-  from{ opacity:0; transform: translateY(10px); }
-  to{ opacity:1; transform: translateY(0); }
-}
-
-/* Respect reduced motion */
-@media (prefers-reduced-motion: reduce){
-  *{ animation: none !important; transition: none !important; }
-}
-
-/* ===== Fix: Bootstrap muted/small text not visible on dark theme ===== */
-.text-muted,
-.small,
-small,
-.card .text-muted,
-.list-item .text-muted {
-  color: rgba(243,246,255,.80) !important;
-}
-
-/* Fix: labels inside cards + light description text */
-.card label,
-.list-item label,
-.card p,
-.list-item p {
-  color: rgba(243,246,255,.92) !important;
-}
-
-/* Fix: “Due:” line and meta lines */
-.list-item .small,
-.list-item small {
-  color: rgba(243,246,255,.78) !important;
-}
-
-/* Fix: make links visible */
-a {
-  color: rgba(120,220,255,.92);
-}
-a:hover {
-  color: rgba(120,220,255,1);
-}
-
-/* Fix: placeholder still clear */
-.form-control::placeholder{
-  color: rgba(243,246,255,.70) !important;
-}
-
-/* ===== Loader Overlay ===== */
-.loader-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.55);
-  backdrop-filter: blur(8px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9998;
-}
-
-/* Optional: glass input look */
-.glass-input {
-  background: rgba(255,255,255,0.06) !important;
-  border: 1px solid rgba(255,255,255,0.12) !important;
-  color: #fff !important;
-}
-
-.glass-input::placeholder {
-  color: rgba(255,255,255,0.55) !important;
-}
-
-/* ==================== DROPDOWN FIX FOR ALL PAGES ==================== */
-
-/* Force font, text color, and background for select inputs */
-select.form-select,
-select.glass-input {
-  font-family: var(--font) !important; /* your Orbitron font */
-  color: #ffffff !important;           /* make selected value visible */
-  background-color: rgba(255,255,255,0.08) !important; /* keep glass look */
-  border: 1px solid rgba(255,255,255,0.14) !important;
-  padding-right: 38px !important;      /* ensure arrow space */
-}
-
-/* Make all options visible on dark background */
-select.form-select option,
-select.glass-input option {
-  background-color: #0B1220 !important;
-  color: #ffffff !important;
-  font-family: var(--font);
-  padding: 8px 12px;
-}
-
-/* Option hover */
-select.form-select option:hover,
-select.glass-input option:hover {
-  background-color: rgba(124,58,237,.4) !important;
-  color: #ffffff !important;
-}
-
-/* Neon arrow fix */
-select.form-select::after,
-select.glass-input::after {
-  content: "▼";
-  position: absolute;
-  right: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
-  color: var(--neon2);
-  text-shadow: 0 0 6px var(--neon2), 0 0 10px var(--neon1);
-}
-
-/* =========================
-   LAYOUT FIX: Reduce empty sides
-   ========================= */
-
-/* Make Bootstrap container wider on big screens (keeps same look) */
-@media (min-width: 1200px){
-  .container{
-    max-width: 1320px; /* default is ~1140px */
-  }
-}
-@media (min-width: 1400px){
-  .container{
-    max-width: 1480px;
-  }
-}
-
-/* Add subtle side glow so background doesn't feel empty */
-body::after{
-  content:"";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(420px 900px at 0% 40%, rgba(124,58,237,.16), transparent 70%),
-    radial-gradient(420px 900px at 100% 45%, rgba(6,182,212,.14), transparent 70%);
-  opacity: .9;
-  z-index: 0;
-}
-
-/* Ensure real content is above background overlays */
-#navArea,
-.page-wrap{
-  position: relative;
-  z-index: 2;
-}
-
-/* =========================
-   IMPROVE "MY WORK TEMPLATES" LIST
-   (works even without HTML changes)
-   ========================= */
-
-/* If you add class="template-grid" to the list container, it becomes a grid */
-.template-grid{
-  display: grid;
-  gap: 10px;
-  grid-template-columns: 1fr;
-}
-@media (min-width: 992px){
-  .template-grid{
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-/* Compact list-item when used as template card */
-.template-card{
-  padding: 12px;
-  border-radius: 16px;
-}
-.template-card .template-title{
-  font-weight: 800;
-  margin-bottom: 4px;
-}
-.template-card .template-meta{
-  font-size: .88rem;
-  color: rgba(243,246,255,.82);
-}
-.template-card .template-note{
-  margin-top: 6px;
-  font-size: .9rem;
-  color: rgba(243,246,255,.86);
-}
-
-/* Delete button nicer + consistent */
-.template-card .btn-outline-danger{
-  border-color: rgba(255,255,255,.22) !important;
-}
-.template-card .btn-outline-danger:hover{
-  background: rgba(239,68,68,.18) !important;
-  border-color: rgba(239,68,68,.35) !important;
-}
-
-/* Make calendar cards fill available space more nicely */
-.calendar-wrap{
-  width: 100%;
-}
-
