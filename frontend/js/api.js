@@ -2,7 +2,7 @@
 const BASE_URL =
   window.API_BASE_URL ||
   localStorage.getItem("API_BASE_URL") ||
-  "http://localhost:5000/api";
+  "https://digitallifeorganizer-production.up.railway.app/api";
 
 async function apiRequest(path, method = "GET", body = null, auth = true) {
   const headers = {};
