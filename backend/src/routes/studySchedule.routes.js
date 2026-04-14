@@ -34,6 +34,10 @@ function calcMinutes(start_time, end_time) {
   return diff;
 }
 
+function sumSessionMinutes(rows) {
+  return rows.reduce((acc, row) => acc + calcMinutes(row.start_time, row.end_time), 0);
+}
+
 function minutesToHM(mins) {
   const h = Math.floor(mins / 60);
   const m = mins % 60;
@@ -67,26 +71,11 @@ router.get("/", async (req, res) => {
     const { start, end } = getWeekRange(today);
 
     const [weekRows] = await db.query(
-      `
-      SELECT
-        COALESCE(SUM(
-          TIMESTAMPDIFF(
-            MINUTE,
-            CONCAT(study_date,' ',start_time),
-            CONCAT(
-              DATE_ADD(study_date, INTERVAL (end_time <= start_time) DAY),
-              ' ',
-              end_time
-            )
-          )
-        ), 0) AS totalMinutes
-      FROM study_schedules
-      WHERE user_id=? AND study_date BETWEEN ? AND ?
-      `,
+      "SELECT start_time, end_time FROM study_schedules WHERE user_id=? AND study_date BETWEEN ? AND ?",
       [userId, start, end]
     );
 
-    const weeklyTotalMinutes = weekRows?.[0]?.totalMinutes ?? 0;
+    const weeklyTotalMinutes = sumSessionMinutes(weekRows);
 
     res.json({
       sessions: rows,
@@ -129,26 +118,11 @@ router.post("/", async (req, res) => {
     const { start, end } = getWeekRange(study_date);
 
     const [weekRows] = await db.query(
-      `
-      SELECT
-        COALESCE(SUM(
-          TIMESTAMPDIFF(
-            MINUTE,
-            CONCAT(study_date,' ',start_time),
-            CONCAT(
-              DATE_ADD(study_date, INTERVAL (end_time <= start_time) DAY),
-              ' ',
-              end_time
-            )
-          )
-        ), 0) AS totalMinutes
-      FROM study_schedules
-      WHERE user_id=? AND study_date BETWEEN ? AND ?
-      `,
+      "SELECT start_time, end_time FROM study_schedules WHERE user_id=? AND study_date BETWEEN ? AND ?",
       [userId, start, end]
     );
 
-    const weeklyTotalMinutes = weekRows?.[0]?.totalMinutes ?? 0;
+    const weeklyTotalMinutes = sumSessionMinutes(weekRows);
 
     // Example UI reminder rule (you can change):
     // if weekly study < 10 hours, show reminder

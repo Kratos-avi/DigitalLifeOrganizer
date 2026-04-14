@@ -20,12 +20,13 @@
     <div class="card p-4 mx-auto shadow-soft" style="max-width: 560px;">
       <div class="row g-3">
         <div class="col-md-6">
-          <label class="form-label">Full Name</label>
-          <input id="full_name" class="form-control" placeholder="Avinash">
+          <label class="form-label" for="full_name">Full Name</label>
+          <input id="full_name" class="form-control" placeholder="Avinash" aria-describedby="full_nameFeedback">
+          <div id="full_nameFeedback" class="invalid-feedback"></div>
         </div>
 
         <div class="col-md-6">
-          <label class="form-label">Role</label>
+          <label class="form-label" for="role">Role</label>
           <select id="role" class="form-select">
             <option value="newcomer" selected>Newcomer</option>
             <option value="admin">Admin</option>
@@ -33,17 +34,19 @@
         </div>
 
         <div class="col-12">
-          <label class="form-label">Email</label>
-          <input id="email" class="form-control" placeholder="avinash@test.com">
+          <label class="form-label" for="email">Email</label>
+          <input id="email" class="form-control" placeholder="avinash@test.com" aria-describedby="emailFeedback">
+          <div id="emailFeedback" class="invalid-feedback"></div>
         </div>
 
         <div class="col-12">
-          <label class="form-label">Password</label>
-          <input id="password" type="password" class="form-control" placeholder="Minimum 6 characters">
+          <label class="form-label" for="password">Password</label>
+          <input id="password" type="password" class="form-control" placeholder="Minimum 6 characters" aria-describedby="passwordFeedback">
+          <div id="passwordFeedback" class="invalid-feedback"></div>
         </div>
 
         <div class="col-12">
-          <button class="btn btn-dark w-100" onclick="register()">Create Account</button>
+          <button id="registerBtn" class="btn btn-dark w-100" onclick="register()">Create Account</button>
           <div class="text-center mt-3">
             <span class="small-muted">Already have an account?</span> <a href="index.html">Login</a>
           </div>
@@ -61,14 +64,77 @@
   <script>
     renderNavbar();
 
+    function setFieldError(el, message) {
+      if (!el) return;
+      el.classList.add("is-invalid");
+      const feedback = document.getElementById(el.id + "Feedback");
+      if (feedback) feedback.textContent = message;
+    }
+
+    function clearFieldError(el) {
+      if (!el) return;
+      el.classList.remove("is-invalid");
+      const feedback = document.getElementById(el.id + "Feedback");
+      if (feedback) feedback.textContent = "";
+    }
+
+    function validateEmail(value) {
+      return /^\S+@\S+\.\S+$/.test(value);
+    }
+
     async function register() {
-      const full_name = document.getElementById("full_name").value.trim();
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
-      const role = document.getElementById("role").value;
+      const fullNameEl = document.getElementById("full_name");
+      const emailEl = document.getElementById("email");
+      const passwordEl = document.getElementById("password");
+      const roleEl = document.getElementById("role");
+      const btn = document.getElementById("registerBtn");
 
-      if (!full_name || !email || !password) return toast("All fields are required", "error");
+      clearFieldError(fullNameEl);
+      clearFieldError(emailEl);
+      clearFieldError(passwordEl);
 
+      const full_name = fullNameEl.value.trim();
+      const email = emailEl.value.trim();
+      const password = passwordEl.value;
+      const role = roleEl.value;
+
+      if (!full_name) {
+        setFieldError(fullNameEl, "Full name is required");
+        fullNameEl.focus();
+        return;
+      }
+
+      if (full_name.length < 2) {
+        setFieldError(fullNameEl, "Full name must be at least 2 characters");
+        fullNameEl.focus();
+        return;
+      }
+
+      if (!email) {
+        setFieldError(emailEl, "Email is required");
+        emailEl.focus();
+        return;
+      }
+
+      if (!validateEmail(email)) {
+        setFieldError(emailEl, "Enter a valid email address");
+        emailEl.focus();
+        return;
+      }
+
+      if (!password) {
+        setFieldError(passwordEl, "Password is required");
+        passwordEl.focus();
+        return;
+      }
+
+      if (password.length < 6) {
+        setFieldError(passwordEl, "Password must be at least 6 characters");
+        passwordEl.focus();
+        return;
+      }
+
+      btn.disabled = true;
       try {
         const data = await apiRequest("/auth/register", "POST", { full_name, email, password, role }, false);
 
@@ -81,6 +147,8 @@
         }
       } catch (e) {
         toast(e.message, "error");
+      } finally {
+        btn.disabled = false;
       }
     }
   </script>

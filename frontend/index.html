@@ -31,13 +31,19 @@
         <div class="small-muted">Sign in to continue</div>
       </div>
 
-      <label class="form-label">Email</label>
-      <input id="email" class="form-control mb-3" placeholder="avinash@test.com">
+      <div class="mb-3">
+        <label class="form-label" for="email">Email</label>
+        <input id="email" class="form-control" placeholder="avinash@test.com" aria-describedby="emailFeedback">
+        <div id="emailFeedback" class="invalid-feedback"></div>
+      </div>
 
-      <label class="form-label">Password</label>
-      <input id="password" type="password" class="form-control mb-3" placeholder="••••••••">
+      <div class="mb-3">
+        <label class="form-label" for="password">Password</label>
+        <input id="password" type="password" class="form-control" placeholder="••••••••" aria-describedby="passwordFeedback">
+        <div id="passwordFeedback" class="invalid-feedback"></div>
+      </div>
 
-      <button class="btn btn-dark w-100" onclick="login()">Login</button>
+      <button id="loginBtn" class="btn btn-dark w-100" onclick="login()">Login</button>
 
       <div class="text-center mt-3">
         <span class="small-muted">No account?</span> <a href="register.html">Register</a>
@@ -58,10 +64,54 @@
     const u = getUser();
     if (token && u) redirectByRole(u);
 
-    async function login() {
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
+    function setFieldError(el, message) {
+      if (!el) return;
+      el.classList.add("is-invalid");
+      const feedback = document.getElementById(el.id + "Feedback");
+      if (feedback) feedback.textContent = message;
+    }
 
+    function clearFieldError(el) {
+      if (!el) return;
+      el.classList.remove("is-invalid");
+      const feedback = document.getElementById(el.id + "Feedback");
+      if (feedback) feedback.textContent = "";
+    }
+
+    function validateEmail(value) {
+      return /^\S+@\S+\.\S+$/.test(value);
+    }
+
+    async function login() {
+      const emailEl = document.getElementById("email");
+      const passwordEl = document.getElementById("password");
+      const btn = document.getElementById("loginBtn");
+
+      clearFieldError(emailEl);
+      clearFieldError(passwordEl);
+
+      const email = emailEl.value.trim();
+      const password = passwordEl.value;
+
+      if (!email) {
+        setFieldError(emailEl, "Email is required");
+        emailEl.focus();
+        return;
+      }
+
+      if (!validateEmail(email)) {
+        setFieldError(emailEl, "Enter a valid email address");
+        emailEl.focus();
+        return;
+      }
+
+      if (!password) {
+        setFieldError(passwordEl, "Password is required");
+        passwordEl.focus();
+        return;
+      }
+
+      btn.disabled = true;
       try {
         const data = await apiRequest("/auth/login", "POST", { email, password }, false);
         if (data.token) {
@@ -73,6 +123,8 @@
         }
       } catch (e) {
         toast(e.message, "error");
+      } finally {
+        btn.disabled = false;
       }
     }
   </script>

@@ -31,6 +31,14 @@ function minutesToHM(mins) {
   return `${h}h ${m}m`;
 }
 
+function calcMinutes(start_time, end_time) {
+  const s = timeToMinutes(start_time);
+  const e = timeToMinutes(end_time);
+  let diff = e - s;
+  if (diff <= 0) diff = 24 * 60 - s + e;
+  return diff;
+}
+
 // ---------- GET shifts ----------
 router.get("/", async (req, res) => {
   try {
@@ -87,26 +95,11 @@ router.post("/", async (req, res) => {
 
     // current week minutes (handles overnight correctly)
     const [rows] = await db.query(
-      `
-      SELECT
-        COALESCE(SUM(
-          TIMESTAMPDIFF(
-            MINUTE,
-            CONCAT(shift_date,' ',start_time),
-            CONCAT(
-              DATE_ADD(shift_date, INTERVAL (end_time <= start_time) DAY),
-              ' ',
-              end_time
-            )
-          )
-        ), 0) AS totalMinutes
-      FROM work_schedules
-      WHERE user_id=? AND shift_date BETWEEN ? AND ?
-      `,
+      "SELECT start_time, end_time FROM work_schedules WHERE user_id=? AND shift_date BETWEEN ? AND ?",
       [userId, start, end]
     );
 
-    const existingMinutes = rows?.[0]?.totalMinutes ?? 0;
+    const existingMinutes = rows.reduce((acc, row) => acc + calcMinutes(row.start_time, row.end_time), 0);
     const weeklyTotalAfter = existingMinutes + newShiftMinutes;
     const limitMinutes = 24 * 60;
 

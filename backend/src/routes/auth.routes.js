@@ -87,6 +87,11 @@ router.post("/register", async (req, res) => {
 
   } catch (err) {
     console.error(err);
+    if (err.code === "PROTOCOL_CONNECTION_LOST" || /Connection lost/i.test(err.message || "")) {
+      return res.status(503).json({
+        message: "Database connection failed. Check backend .env DB credentials or database availability."
+      });
+    }
     return res.status(500).json({ message: "Server error" });
   }
 });
@@ -137,6 +142,11 @@ router.post("/login", async (req, res) => {
 
   } catch (err) {
     console.error(err);
+    if (err.code === "PROTOCOL_CONNECTION_LOST" || /Connection lost/i.test(err.message || "")) {
+      return res.status(503).json({
+        message: "Database connection failed. Check backend .env DB credentials or database availability."
+      });
+    }
     return res.status(500).json({ message: "Server error" });
   }
 });

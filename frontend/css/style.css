@@ -377,3 +377,90 @@ select.glass-input::after {
   color: var(--neon2);
   text-shadow: 0 0 6px var(--neon2), 0 0 10px var(--neon1);
 }
+
+/* =========================
+   LAYOUT FIX: Reduce empty sides
+   ========================= */
+
+/* Make Bootstrap container wider on big screens (keeps same look) */
+@media (min-width: 1200px){
+  .container{
+    max-width: 1320px; /* default is ~1140px */
+  }
+}
+@media (min-width: 1400px){
+  .container{
+    max-width: 1480px;
+  }
+}
+
+/* Add subtle side glow so background doesn't feel empty */
+body::after{
+  content:"";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(420px 900px at 0% 40%, rgba(124,58,237,.16), transparent 70%),
+    radial-gradient(420px 900px at 100% 45%, rgba(6,182,212,.14), transparent 70%);
+  opacity: .9;
+  z-index: 0;
+}
+
+/* Ensure real content is above background overlays */
+#navArea,
+.page-wrap{
+  position: relative;
+  z-index: 2;
+}
+
+/* =========================
+   IMPROVE "MY WORK TEMPLATES" LIST
+   (works even without HTML changes)
+   ========================= */
+
+/* If you add class="template-grid" to the list container, it becomes a grid */
+.template-grid{
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 992px){
+  .template-grid{
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Compact list-item when used as template card */
+.template-card{
+  padding: 12px;
+  border-radius: 16px;
+}
+.template-card .template-title{
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+.template-card .template-meta{
+  font-size: .88rem;
+  color: rgba(243,246,255,.82);
+}
+.template-card .template-note{
+  margin-top: 6px;
+  font-size: .9rem;
+  color: rgba(243,246,255,.86);
+}
+
+/* Delete button nicer + consistent */
+.template-card .btn-outline-danger{
+  border-color: rgba(255,255,255,.22) !important;
+}
+.template-card .btn-outline-danger:hover{
+  background: rgba(239,68,68,.18) !important;
+  border-color: rgba(239,68,68,.35) !important;
+}
+
+/* Make calendar cards fill available space more nicely */
+.calendar-wrap{
+  width: 100%;
+}
+
