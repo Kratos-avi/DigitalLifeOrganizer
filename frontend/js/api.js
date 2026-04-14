@@ -1,8 +1,18 @@
 // frontend/js/api.js
-const BASE_URL =
-  window.API_BASE_URL ||
-  localStorage.getItem("API_BASE_URL") ||
-  "https://digitallifeorganizer-production.up.railway.app/api";
+function normalizeApiBaseUrl(value) {
+  if (!value || typeof value !== "string") return "";
+  const v = value.trim().replace(/\/+$/, "");
+  if (!/^https?:\/\//i.test(v)) return "";
+  return v;
+}
+
+const DEFAULT_API_BASE_URL = "https://digitallifeorganizer-production.up.railway.app/api";
+const CONFIGURED_API_BASE_URL = normalizeApiBaseUrl(window.API_BASE_URL) || normalizeApiBaseUrl(localStorage.getItem("API_BASE_URL"));
+const BASE_URL = CONFIGURED_API_BASE_URL || DEFAULT_API_BASE_URL;
+
+window.getApiBaseUrl = function () {
+  return BASE_URL;
+};
 
 async function apiRequest(path, method = "GET", body = null, auth = true) {
   const headers = {};
@@ -27,6 +37,10 @@ async function apiRequest(path, method = "GET", body = null, auth = true) {
     const data = isJson ? await res.json() : null;
 
     if (!res.ok) {
+      if ((res.status === 401 || res.status === 403) && auth) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+      }
       const msg = data?.message || "Something went wrong.";
       throw new Error(msg);
     }
@@ -36,6 +50,11 @@ async function apiRequest(path, method = "GET", body = null, auth = true) {
     if (err instanceof TypeError) {
       throw new Error("Cannot reach backend API. Set correct API URL and check CORS/deployment.");
     }
+
+    if ((/token|unauthorized|forbidden|jwt|expired/i).test(String(err.message || "")) && auth) {
+      throw new Error("Session expired or unauthorized. Please login again.");
+    }
+
     throw err;
   } finally {
     if (typeof showLoader === "function") showLoader(false);
