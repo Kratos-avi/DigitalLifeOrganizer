@@ -39,14 +39,6 @@
           <div id="full_nameFeedback" class="invalid-feedback"></div>
         </div>
 
-        <div class="col-md-6">
-          <label class="form-label" for="role">Role</label>
-          <select id="role" class="form-select">
-            <option value="newcomer" selected>Newcomer</option>
-            <option value="admin">Admin</option>
-          </select>
-        </div>
-
         <div class="col-12">
           <label class="form-label" for="email">Email</label>
           <input id="email" class="form-control" placeholder="avinash@test.com" aria-describedby="emailFeedback">
@@ -100,7 +92,6 @@
       const fullNameEl = document.getElementById("full_name");
       const emailEl = document.getElementById("email");
       const passwordEl = document.getElementById("password");
-      const roleEl = document.getElementById("role");
       const btn = document.getElementById("registerBtn");
 
       clearFieldError(fullNameEl);
@@ -110,7 +101,6 @@
       const full_name = fullNameEl.value.trim();
       const email = emailEl.value.trim();
       const password = passwordEl.value;
-      const role = roleEl.value;
 
       if (!full_name) {
         setFieldError(fullNameEl, "Full name is required");
@@ -150,7 +140,7 @@
 
       btn.disabled = true;
       try {
-        const data = await apiRequest("/auth/register", "POST", { full_name, email, password, role }, false);
+        const data = await apiRequest("/auth/register", "POST", { full_name, email, password }, false);
 
         if (data.token) {
           saveAuth(data.token, data.user);

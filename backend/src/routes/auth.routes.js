@@ -40,7 +40,7 @@ function makeToken(user) {
 ================================= */
 router.post("/register", async (req, res) => {
   try {
-    const { full_name, email, password, role } = req.body;
+    const { full_name, email, password } = req.body;
 
     // Basic validation
     if (!full_name || !email || !password) {
@@ -49,7 +49,7 @@ router.post("/register", async (req, res) => {
       });
     }
 
-    const safeRole = role === "admin" ? "admin" : "newcomer";
+    const safeRole = "newcomer";
 
     // Check if email already exists
     const [exists] = await pool.query(
