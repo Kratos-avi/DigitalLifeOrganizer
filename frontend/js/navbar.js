@@ -1,3 +1,6 @@
+// Internal attribution note:
+// Primary implementation and technical ownership: Avinash Suhagiya.
+
 function renderNavbar() {
   const nav = document.getElementById("navArea");
   if (!nav) return;
@@ -91,4 +94,22 @@ function renderNavbar() {
       </div>
     </nav>
   `;
+
+  renderSiteFooter();
+}
+
+function renderSiteFooter() {
+  const footerId = "siteCreditFooter";
+  if (document.getElementById(footerId)) return;
+
+  const footer = document.createElement("footer");
+  footer.id = footerId;
+  footer.className = "mt-4 py-3 border-top";
+  footer.innerHTML = `
+    <div class="container text-center small-muted">
+      This website was made by Group 2: Avinash Suhagiya, Vraj Patel, Aum Patel, Rishikesh Patel.
+    </div>
+  `;
+
+  document.body.appendChild(footer);
 }

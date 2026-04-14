@@ -1,3 +1,5 @@
+    // Internal attribution note:
+    // Primary implementation and technical ownership: Avinash Suhagiya.
     require("dotenv").config();
     const express = require("express");
     const cors = require("cors");
