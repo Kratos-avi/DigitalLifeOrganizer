@@ -23,8 +23,8 @@ function termWeekNumber(termStartStr, dateStr) {
   return Math.floor(diffDays / 7) + 1; // week 1..n
 }
 
-// generate all dates in month that match weekday, within [start_date, end_date], skipping week 8
-function generateMonthEvents(template, monthStr, skipWeek = 8) {
+// generate all dates in month that match weekday, within [start_date, end_date]
+function generateMonthEvents(template, monthStr) {
   const [Y, M] = monthStr.split("-").map(Number); // YYYY-MM
   const first = new Date(Date.UTC(Y, M - 1, 1));
   const last = new Date(Date.UTC(Y, M, 0)); // last day
@@ -43,9 +43,7 @@ function generateMonthEvents(template, monthStr, skipWeek = 8) {
     // weekday match
     if (isoWeekday(local) !== Number(template.weekday)) continue;
 
-    // skip week 8
     const wk = termWeekNumber(template.start_date, ymd);
-    if (wk === skipWeek) continue;
 
     out.push({
       type: "template",
@@ -128,7 +126,7 @@ router.get("/generate", async (req, res) => {
 
     let events = [];
     for (const t of templates) {
-      events = events.concat(generateMonthEvents(t, month, 8)); // skip week 8
+      events = events.concat(generateMonthEvents(t, month));
     }
 
     res.json({ month, events });

@@ -21,7 +21,7 @@ function termWeekNumber(termStartStr, dateStr) {
 }
 
 // generate week events for weekStart (Mon date): /generate?weekStart=YYYY-MM-DD
-function generateWeekEvents(template, weekStartStr, skipWeek = 8) {
+function generateWeekEvents(template, weekStartStr) {
   const ws = parseYMD(weekStartStr); // Monday
   const startBound = parseYMD(template.start_date);
   const endBound = parseYMD(template.end_date);
@@ -36,7 +36,6 @@ function generateWeekEvents(template, weekStartStr, skipWeek = 8) {
     if (isoWeekday(d) !== Number(template.weekday)) continue;
 
     const wk = termWeekNumber(template.start_date, ymd);
-    if (wk === skipWeek) continue;
 
     out.push({
       type: "template",
@@ -118,7 +117,7 @@ router.get("/generate", async (req, res) => {
 
     let events = [];
     for (const t of templates) {
-      events = events.concat(generateWeekEvents(t, weekStart, 8)); // skip week 8
+      events = events.concat(generateWeekEvents(t, weekStart));
     }
 
     res.json({ weekStart, events });
