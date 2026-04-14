@@ -6,10 +6,28 @@ const starterTasks = require("../data/starterTasks");
 
 const router = express.Router();
 
+function isDbConnectionError(err) {
+  const code = err?.code || "";
+  const message = String(err?.message || "");
+  return (
+    code === "PROTOCOL_CONNECTION_LOST" ||
+    code === "ECONNREFUSED" ||
+    code === "ER_ACCESS_DENIED_ERROR" ||
+    code === "ENOTFOUND" ||
+    /connection lost|connect econnrefused|access denied|getaddrinfo enotfound/i.test(message)
+  );
+}
+
 /* ===============================
    CREATE JWT TOKEN
 ================================= */
 function makeToken(user) {
+  if (!process.env.JWT_SECRET) {
+    const error = new Error("JWT_SECRET is missing in environment variables");
+    error.code = "JWT_SECRET_MISSING";
+    throw error;
+  }
+
   return jwt.sign(
     { id: user.id, email: user.email, role: user.role },
     process.env.JWT_SECRET,
@@ -87,9 +105,14 @@ router.post("/register", async (req, res) => {
 
   } catch (err) {
     console.error(err);
-    if (err.code === "PROTOCOL_CONNECTION_LOST" || /Connection lost/i.test(err.message || "")) {
+    if (err.code === "JWT_SECRET_MISSING") {
+      return res.status(500).json({
+        message: "Backend config error: JWT_SECRET is missing in Railway variables."
+      });
+    }
+    if (isDbConnectionError(err)) {
       return res.status(503).json({
-        message: "Database connection failed. Check backend .env DB credentials or database availability."
+        message: "Database connection failed. Check MYSQL_URL reference in backend service variables."
       });
     }
     return res.status(500).json({ message: "Server error" });
@@ -142,9 +165,14 @@ router.post("/login", async (req, res) => {
 
   } catch (err) {
     console.error(err);
-    if (err.code === "PROTOCOL_CONNECTION_LOST" || /Connection lost/i.test(err.message || "")) {
+    if (err.code === "JWT_SECRET_MISSING") {
+      return res.status(500).json({
+        message: "Backend config error: JWT_SECRET is missing in Railway variables."
+      });
+    }
+    if (isDbConnectionError(err)) {
       return res.status(503).json({
-        message: "Database connection failed. Check backend .env DB credentials or database availability."
+        message: "Database connection failed. Check MYSQL_URL reference in backend service variables."
       });
     }
     return res.status(500).json({ message: "Server error" });
