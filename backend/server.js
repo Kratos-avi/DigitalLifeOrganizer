@@ -22,17 +22,25 @@
 
     const app = express();
 
-    // ✅ LOCAL CORS
-    app.use(
-      cors({
-        origin: [
+        const allowedOrigins = [
           "http://localhost:5500",
           "http://127.0.0.1:5500",
           "http://localhost:5173",
           "http://127.0.0.1:5173",
           "http://localhost:3000",
           "http://127.0.0.1:3000",
-        ],
+          process.env.FRONTEND_URL,
+        ].filter(Boolean);
+
+        // CORS for local and deployed frontend
+    app.use(
+      cors({
+            origin: (origin, callback) => {
+              if (!origin || allowedOrigins.includes(origin)) {
+                return callback(null, true);
+              }
+              return callback(new Error("Not allowed by CORS"));
+            },
         credentials: false,
       })
     );

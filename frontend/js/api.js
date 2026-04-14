@@ -1,6 +1,8 @@
 // frontend/js/api.js
-// ✅ LOCAL ONLY
-const BASE_URL = "http://localhost:5000/api";
+const BASE_URL =
+  window.API_BASE_URL ||
+  localStorage.getItem("API_BASE_URL") ||
+  "http://localhost:5000/api";
 
 async function apiRequest(path, method = "GET", body = null, auth = true) {
   const headers = {};
@@ -30,6 +32,11 @@ async function apiRequest(path, method = "GET", body = null, auth = true) {
     }
 
     return data;
+  } catch (err) {
+    if (err instanceof TypeError) {
+      throw new Error("Cannot reach backend API. Set correct API URL and check CORS/deployment.");
+    }
+    throw err;
   } finally {
     if (typeof showLoader === "function") showLoader(false);
   }
