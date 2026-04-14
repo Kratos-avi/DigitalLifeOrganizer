@@ -120,3 +120,47 @@ VALUES
 
 INSERT IGNORE INTO announcements (id, title, message, category, created_by)
 VALUES (1, 'Welcome', 'Local development database is ready.', 'general', 1);
+
+INSERT IGNORE INTO tasks (id, user_id, title, description, due_date, status, is_starter)
+VALUES
+  (1, 2, 'Apply for SIN', 'Visit Service Canada and submit application documents.', '2026-04-21', 'pending', 1),
+  (2, 2, 'Open a bank account', 'Compare chequing accounts and choose one.', '2026-04-23', 'pending', 1),
+  (3, 2, 'Create a Canadian-style resume', 'Update resume with local formatting and contact details.', '2026-04-25', 'completed', 1),
+  (4, 2, 'Get a transit card', 'Buy or activate a local transit card.', '2026-04-19', 'pending', 1),
+  (5, 2, 'Set up email folder', 'Organize important documents in one folder.', '2026-04-18', 'completed', 1),
+  (6, 1, 'Review dashboard stats', 'Verify admin widgets and database counts.', '2026-04-20', 'pending', 0),
+  (7, 1, 'Publish weekly announcement', 'Post a welcome note for users.', '2026-04-22', 'pending', 0);
+
+INSERT IGNORE INTO deadlines (id, user_id, title, category, due_date, notes, priority, status)
+VALUES
+  (1, 2, 'Passport copy ready', 'immigration', '2026-04-20 17:00:00', 'Keep a scanned copy in the document folder.', 'high', 'upcoming'),
+  (2, 2, 'Bank appointment', 'finance', '2026-04-23 10:30:00', 'Bring ID and proof of address.', 'medium', 'upcoming'),
+  (3, 2, 'Job applications batch', 'career', '2026-04-26 18:00:00', 'Apply to at least 5 roles.', 'high', 'upcoming'),
+  (4, 1, 'Check admin reports', 'admin', '2026-04-21 09:00:00', 'Review active users and task counts.', 'medium', 'upcoming');
+
+INSERT IGNORE INTO study_schedules (id, user_id, study_date, start_time, end_time, subject, notes)
+VALUES
+  (1, 2, '2026-04-19', '18:00:00', '20:00:00', 'English Practice', 'Focus on speaking and vocabulary.'),
+  (2, 2, '2026-04-21', '19:00:00', '21:00:00', 'Computer Skills', 'Review email, files, and browsing.'),
+  (3, 1, '2026-04-20', '08:00:00', '09:00:00', 'System Review', 'Verify deployment and metrics.');
+
+INSERT IGNORE INTO work_schedules (id, user_id, shift_date, start_time, end_time, workplace, role, notes)
+VALUES
+  (1, 2, '2026-04-22', '09:00:00', '13:00:00', 'City Cafe', 'Barista', 'Bring uniform and arrive 15 minutes early.'),
+  (2, 2, '2026-04-24', '14:00:00', '18:00:00', 'Library Help Desk', 'Assistant', 'Prepare student ID and schedule.'),
+  (3, 1, '2026-04-23', '10:00:00', '12:00:00', 'Remote', 'Admin', 'Check user requests and announcements.');
+
+INSERT IGNORE INTO study_templates (id, user_id, subject, weekday, start_time, end_time, start_date, end_date, notes)
+VALUES
+  (1, 2, 'English Practice', 1, '18:00:00', '20:00:00', '2026-04-14', '2026-07-14', 'Weekly language study block.'),
+  (2, 2, 'Computer Skills', 3, '19:00:00', '21:00:00', '2026-04-14', '2026-07-14', 'Practice common digital tasks.');
+
+INSERT IGNORE INTO work_templates (id, user_id, workplace, role, weekday, start_time, end_time, start_date, end_date, notes)
+VALUES
+  (1, 2, 'City Cafe', 'Barista', 2, '09:00:00', '13:00:00', '2026-04-14', '2026-07-14', 'Consistent morning shift.'),
+  (2, 2, 'Library Help Desk', 'Assistant', 4, '14:00:00', '18:00:00', '2026-04-14', '2026-07-14', 'Afternoon support shift.');
+
+INSERT IGNORE INTO announcements (id, title, message, category, created_by)
+VALUES
+  (2, 'Sample data loaded', 'Sample tasks, deadlines, schedules, and templates are available for testing.', 'general', 1),
+  (3, 'Admin reminder', 'Check Railway variables and redeploy after config updates.', 'system', 1);
