@@ -6,8 +6,13 @@ function normalizeApiBaseUrl(value) {
   return v;
 }
 
-const DEFAULT_API_BASE_URL = "https://digitallifeorganizer-production.up.railway.app/api";
-const CONFIGURED_API_BASE_URL = normalizeApiBaseUrl(window.API_BASE_URL) || normalizeApiBaseUrl(localStorage.getItem("API_BASE_URL"));
+// 🔥 CHANGE HERE (IMPORTANT)
+const DEFAULT_API_BASE_URL = window.location.origin + "/api";
+
+const CONFIGURED_API_BASE_URL =
+  normalizeApiBaseUrl(window.API_BASE_URL) ||
+  normalizeApiBaseUrl(localStorage.getItem("API_BASE_URL"));
+
 const BASE_URL = CONFIGURED_API_BASE_URL || DEFAULT_API_BASE_URL;
 
 window.getApiBaseUrl = function () {
@@ -48,7 +53,7 @@ async function apiRequest(path, method = "GET", body = null, auth = true) {
     return data;
   } catch (err) {
     if (err instanceof TypeError) {
-      throw new Error("Cannot reach backend API. Set correct API URL and check CORS/deployment.");
+      throw new Error("Cannot reach backend API. Check AWS backend (/api) and CORS.");
     }
 
     if ((/token|unauthorized|forbidden|jwt|expired/i).test(String(err.message || "")) && auth) {
